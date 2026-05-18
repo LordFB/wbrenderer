@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WBrenderer API Documentation</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
     <style>
         :root {
             --bg: #070b10;
@@ -24,8 +27,13 @@
             --mono: 'JetBrains Mono', monospace;
         }
 
-        * { box-sizing: border-box; }
-        html { scroll-behavior: smooth; }
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
 
         body {
             margin: 0;
@@ -66,8 +74,16 @@
             clip-path: polygon(50% 5%, 94% 82%, 60% 82%, 48% 58%, 35% 82%, 6% 82%);
         }
 
-        nav ul { list-style: none; padding: 0; margin: 0; }
-        nav li { margin-bottom: 0.5rem; }
+        nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        nav li {
+            margin-bottom: 0.5rem;
+        }
+
         nav a {
             text-decoration: none;
             color: var(--muted);
@@ -79,7 +95,7 @@
         }
 
         nav a:hover {
-            background: rgba(255,255,255,0.05);
+            background: rgba(255, 255, 255, 0.05);
             color: var(--text);
             transform: translateX(4px);
         }
@@ -107,15 +123,42 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        h1 { font-size: 3rem; font-weight: 800; margin-bottom: 1rem; letter-spacing: -0.03em; }
-        h2 { font-size: 1.8rem; margin-top: 4rem; border-bottom: 1px solid var(--line); padding-bottom: 0.5rem; color: var(--blue); }
-        h3 { font-size: 1.2rem; margin-top: 2rem; color: var(--text); }
+        h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            letter-spacing: -0.03em;
+        }
 
-        p { color: var(--muted); margin-bottom: 1.5rem; }
+        h2 {
+            font-size: 1.8rem;
+            margin-top: 4rem;
+            border-bottom: 1px solid var(--line);
+            padding-bottom: 0.5rem;
+            color: var(--blue);
+        }
+
+        h3 {
+            font-size: 1.2rem;
+            margin-top: 2rem;
+            color: var(--text);
+        }
+
+        p {
+            color: var(--muted);
+            margin-bottom: 1.5rem;
+        }
 
         /* Code Styling */
         code {
@@ -134,7 +177,7 @@
             overflow-x: auto;
             border: 1px solid var(--line);
             margin: 1.5rem 0;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
         }
 
         pre code {
@@ -145,10 +188,22 @@
             line-height: 1.5;
         }
 
-        .keyword { color: #c693ff; }
-        .function { color: #6cb6ff; }
-        .string { color: #b6e880; }
-        .comment { color: #5f6b79; font-style: italic; }
+        .keyword {
+            color: #c693ff;
+        }
+
+        .function {
+            color: #6cb6ff;
+        }
+
+        .string {
+            color: #b6e880;
+        }
+
+        .comment {
+            color: #5f6b79;
+            font-style: italic;
+        }
 
         /* Tables */
         table {
@@ -160,9 +215,23 @@
             overflow: hidden;
         }
 
-        th { background: var(--line); text-align: left; padding: 1rem; font-size: 0.8rem; text-transform: uppercase; }
-        td { padding: 1rem; border-bottom: 1px solid var(--line); font-size: 0.9rem; }
-        tr:last-child td { border-bottom: none; }
+        th {
+            background: var(--line);
+            text-align: left;
+            padding: 1rem;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--line);
+            font-size: 0.9rem;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
 
         /* Callouts */
         .callout {
@@ -174,18 +243,24 @@
         }
 
         @media (max-width: 900px) {
-            body { grid-template-columns: 1fr; }
-            nav.sidebar { display: none; }
+            body {
+                grid-template-columns: 1fr;
+            }
+
+            nav.sidebar {
+                display: none;
+            }
         }
     </style>
 </head>
+
 <body>
     <nav class="sidebar">
         <div class="logo-area">
             <div class="logo-icon"></div>
             <span>WBrenderer</span>
         </div>
-        
+
         <div class="nav-group">Getting Started</div>
         <ul>
             <li><a href="#intro" class="active">Introduction</a></li>
@@ -206,27 +281,35 @@
         <ul>
             <li><a href="#brender">BRender Facade</a></li>
         </ul>
+        <div class="nav-group">Quick Start</div>
+        <ul>
+            <li><a href="#quickstart">Quickstart</a></li>
+        </ul>
     </nav>
 
     <main>
         <section id="intro">
             <h1>WBrenderer JS API</h1>
-            <p>A high-fidelity software implementation of the classic BRender engine, written in pure ES6 with zero runtime dependencies. Optimized for high-performance pixel manipulation and nostalgic 90s-era 3D rendering.</p>
+            <p>A high-fidelity software implementation of the classic BRender engine, written in pure ES6 with zero
+                runtime dependencies. Optimized for high-performance pixel manipulation and nostalgic 90s-era 3D
+                rendering.</p>
         </section>
 
         <section id="principles">
             <h2>Core Principles</h2>
             <ul>
                 <li><strong>Zero Dependencies:</strong> No npm installs required. Drop the folder and go.</li>
-                <li><strong>Data-Oriented Math:</strong> Matrices and Vectors are standard <code>Float32Array</code> buffers for speed and minimal GC pressure.</li>
-                <li><strong>Software Rasterization:</strong> Custom C-style scanline loops for flat, Gouraud, and textured paths.</li>
+                <li><strong>Data-Oriented Math:</strong> Matrices and Vectors are standard <code>Float32Array</code>
+                    buffers for speed and minimal GC pressure.</li>
+                <li><strong>Software Rasterization:</strong> Custom C-style scanline loops for flat, Gouraud, and
+                    textured paths.</li>
             </ul>
         </section>
 
         <section id="math">
             <h2>Math Library</h2>
             <p>All operations are pure functions to avoid object allocation in hot paths.</p>
-            
+
             <h3>Vec3 (3-Element Vector)</h3>
             <pre><code><span class="keyword">import</span> { Vec3 } <span class="keyword">from</span> <span class="string">'wbrenderer'</span>;
 
@@ -257,7 +340,7 @@ color.<span class="function">clear</span>(0x101820); <span class="comment">// Da
         <section id="scenegraph">
             <h2>Scene Graph</h2>
             <p>WBrenderer uses an <code>Actor</code> hierarchy similar to BRender's V1DB system.</p>
-            
+
             <div class="callout">
                 <strong>Note:</strong> All actors require a type (MODEL, CAMERA, LIGHT, or NONE).
             </div>
@@ -312,24 +395,81 @@ color.<span class="function">blitToImageData</span>(myImageData);</code></pre>
                         <td>.PIX</td>
                         <td>Array of <code>Pixelmap</code> (Bitmaps)</td>
                     </tr>
+                    <tr>
+                        <td><code>loadAct(buffer)</code></td>
+                        <td>.ACT</td>
+                        <td>Root <code>Actor</code> (Hierarchy)</td>
+                    </tr>
                 </tbody>
             </table>
         </section>
 
         <section id="brender">
             <h2>BRender Facade (Br.*)</h2>
-            <p>For porting legacy C code, use the <code>Br</code> namespace which provides a 1:1 mapping to classic function names.</p>
-            <pre><code><span class="keyword">import</span> { Br } <span class="keyword">from</span> <span class="string">'wbrenderer'</span>;
+            <p>The <code>Br</code> namespace provides a C-style entry point that mirrors BRender 1.3.2. This is the
+                recommended path for porting legacy logic.</p>
 
-Br.<span class="function">BrBegin</span>();
-<span class="keyword">const</span> model = Br.<span class="function">BrFmtModelLoad</span>(<span class="string">'EAGLE.DAT'</span>); <span class="comment">// Load a model</span>
-<span class="keyword">const</span> act = Br.<span class="function">BrActorAllocate</span>(ACTOR_TYPE.MODEL); <span class="comment">// Create an actor</span>
-Br.<span class="function">BrActorAdd</span>(root, act); <span class="comment">// Add to scene</span></code></pre>
+            <h3>Engine Lifecycle & Resources</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Function</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>BrBegin() / BrEnd()</code></td>
+                        <td>Initialize or shutdown the engine state.</td>
+                    </tr>
+                    <tr>
+                        <td><code>BrModelAdd(m) / BrModelFind(name)</code></td>
+                        <td>Register or retrieve models from the global registry.</td>
+                    </tr>
+                    <tr>
+                        <td><code>BrMaterialAdd(m) / BrMaterialFind(name)</code></td>
+                        <td>Register or retrieve materials.</td>
+                    </tr>
+                    <tr>
+                        <td><code>BrMapAdd(pm) / BrMapFind(name)</code></td>
+                        <td>Register or retrieve Pixelmaps (Textures).</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Scene & Rendering</h3>
+            <pre><code><span class="keyword">import</span> { Br, ACTOR_TYPE } <span class="keyword">from</span> <span class="string">'wbrenderer'</span>;
+
+<span class="comment">// Hierarchy management</span>
+<span class="keyword">const</span> root = Br.<span class="function">BrSceneRootAllocate</span>();
+<span class="keyword">const</span> actor = Br.<span class="function">BrActorAllocate</span>(ACTOR_TYPE.MODEL);
+Br.<span class="function">BrActorAdd</span>(root, actor);
+
+<span class="comment">// Rendering</span>
+Br.<span class="function">BrZbSceneRender</span>(root, camera, colorBuf, depthBuf);</code></pre>
+
+            <h3>High-level Loaders</h3>
+            <p>These convenience methods load assets from a URL and automatically register them in the global
+                registries.</p>
+            <ul>
+                <li><code>BrFmtModelLoad(url)</code>: Returns first <code>Model</code>.</li>
+                <li><code>BrFmtMaterialLoad(url)</code>: Returns first <code>Material</code>.</li>
+                <li><code>BrFmtPixelmapLoad(url)</code>: Returns first <code>Pixelmap</code>.</li>
+            </ul>
+
+            <h3>Lights & Fog</h3>
+            <pre><code><span class="comment">// Quick light setup</span>
+<span class="keyword">const</span> sun = Br.<span class="function">BrLightAllocate</span>({ type: LIGHT_TYPE.DIRECT, color: 0xffffff });
+Br.<span class="function">BrLightEnable</span>(sun);
+
+<span class="comment">// Environment</span>
+Br.<span class="function">BrFogSet</span>(scene, { colour: 0x808080, hither: 10, yon: 50 });</code></pre>
         </section>
 
         <section id="quickstart">
             <h2>Quickstart: Plane and Cube</h2>
-            <p>This example demonstrates how to set up a basic scene with a camera, a light, a plane, and a rotating cube.</p>
+            <p>This example demonstrates how to set up a basic scene with a camera, a light, a plane, and a rotating
+                cube.</p>
             <pre><code><span class="keyword">import</span> {
   Pixelmap, TYPE, Renderer, SceneRoot, Actor, ACTOR_TYPE,
   Camera, Light, LIGHT_TYPE, makeCube, makePlane, Mat34
@@ -412,4 +552,5 @@ Br.<span class="function">BrActorAdd</span>(root, act); <span class="comment">//
         });
     </script>
 </body>
+
 </html>

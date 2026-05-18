@@ -90,13 +90,13 @@
     }
 
     async function main() {
-      const res = await fetch('../../Source/DATA/MODELS/EAGLE.DAT');
+      const res = await fetch('data/EAGLE.DAT');
       if (!res.ok) { hud.textContent = 'Failed to load EAGLE.DAT'; return; }
       const ab = await res.arrayBuffer();
       const eagleModel = loadDat(ab)[0];
 
       const scene = new SceneRoot();
-      scene.ambient = 0.15;
+      scene.ambient = 0.05;
       scene.fog = new Fog({ colour: 0xc06030, hither: 15, yon: 45 });
 
       // Three Eagles in a row, each with a different body colour swapped

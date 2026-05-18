@@ -44,10 +44,10 @@
 
     async function main() {
       // ----- Load model + materials + texture pixmaps -----
-      const datAB = await fetchAB('../../Source/DATA/MODELS/EAGLE.DAT');
-      const matAB = await fetchAB('../../Source/DATA/MATERIAL/EAGLE.MAT');
-      const pixAB = await fetchAB('../../Source/DATA/PIXELMAP/EAGLE.PIX');
-      const palAB = await fetchAB('../../Source/DATA/REG/PALETTES/DRRENDER.PAL');
+      const datAB = await fetchAB('data/EAGLE.DAT');
+      const matAB = await fetchAB('data/EAGLE.MAT');
+      const pixAB = await fetchAB('data/EAGLE.PIX');
+      const palAB = await fetchAB('data/DRRENDER.PAL');
 
       const models = Br.BrFmtModelLoad(datAB);     // registers in modelRegistry
       const mats   = Br.BrFmtMaterialLoad(matAB);  // registers in materialRegistry

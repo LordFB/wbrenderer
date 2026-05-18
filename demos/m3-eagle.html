@@ -54,7 +54,7 @@
     }
 
     async function main() {
-      const res = await fetch('../../Source/DATA/MODELS/EAGLE.DAT');
+      const res = await fetch('data/EAGLE.DAT');
       if (!res.ok) { hud.textContent = 'Failed to load EAGLE.DAT (' + res.status + ')'; return; }
       const ab = await res.arrayBuffer();
       const models = loadDat(ab);
