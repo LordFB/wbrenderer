@@ -4,6 +4,8 @@
 
 Built for the modern web with zero runtime dependencies, it provides a full-stack software rendering pipeline—from scene graph management and `.DAT` model loading to a zero-allocation Z-buffered rasterizer that writes directly to `ImageData`.
 
+[Demo](https://blazing-render.netlify.app/)
+
 ## ✨ Key Features
 
 *   **Pure Software Rasterization**: Three specialized paths (Flat, Gouraud, and Palette-indexed Textured) with affine UV mapping.

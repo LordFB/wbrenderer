@@ -409,61 +409,170 @@ color.<span class="function">blitToImageData</span>(myImageData);</code></pre>
             <p>The <code>Br</code> namespace provides a C-style entry point that mirrors BRender 1.3.2. This is the
                 recommended path for porting legacy logic.</p>
 
-            <h3>Engine Lifecycle & Resources</h3>
+            <h3>Lifecycle</h3>
             <table>
                 <thead>
                     <tr>
                         <th>Function</th>
+                        <th>Parameters</th>
                         <th>Description</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td><code>BrBegin() / BrEnd()</code></td>
-                        <td>Initialize or shutdown the engine state.</td>
+                        <td><code>BrBegin()</code></td>
+                        <td>None</td>
+                        <td>Initializes the internal engine state.</td>
                     </tr>
                     <tr>
-                        <td><code>BrModelAdd(m) / BrModelFind(name)</code></td>
-                        <td>Register or retrieve models from the global registry.</td>
+                        <td><code>BrEnd()</code></td>
+                        <td>None</td>
+                        <td>Shuts down the engine and clears state.</td>
                     </tr>
                     <tr>
-                        <td><code>BrMaterialAdd(m) / BrMaterialFind(name)</code></td>
-                        <td>Register or retrieve materials.</td>
-                    </tr>
-                    <tr>
-                        <td><code>BrMapAdd(pm) / BrMapFind(name)</code></td>
-                        <td>Register or retrieve Pixelmaps (Textures).</td>
+                        <td><code>isInitialized()</code></td>
+                        <td>None</td>
+                        <td>Returns <code>true</code> if <code>BrBegin</code> is active.</td>
                     </tr>
                 </tbody>
             </table>
 
-            <h3>Scene & Rendering</h3>
-            <pre><code><span class="keyword">import</span> { Br, ACTOR_TYPE } <span class="keyword">from</span> <span class="string">'wbrenderer'</span>;
+            <h3>Pixelmaps</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Function</th>
+                        <th>Parameters</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>BrPixelmapAllocate(type, w, h)</code></td>
+                        <td>
+                            <code>type</code>: PixelmapType<br>
+                            <code>w</code>: Number (Width)<br>
+                            <code>h</code>: Number (Height)
+                        </td>
+                        <td>Creates a new Pixelmap buffer.</td>
+                    </tr>
+                    <tr>
+                        <td><code>BrPixelmapFill(pm, value)</code></td>
+                        <td>
+                            <code>pm</code>: Pixelmap<br>
+                            <code>value</code>: Number (color/depth)
+                        </td>
+                        <td>Clears the pixelmap with a specific value.</td>
+                    </tr>
+                </tbody>
+            </table>
 
-<span class="comment">// Hierarchy management</span>
-<span class="keyword">const</span> root = Br.<span class="function">BrSceneRootAllocate</span>();
-<span class="keyword">const</span> actor = Br.<span class="function">BrActorAllocate</span>(ACTOR_TYPE.MODEL);
-Br.<span class="function">BrActorAdd</span>(root, actor);
+            <h3>Resource Registry</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Function</th>
+                        <th>Parameters</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>BrModelAdd(model) / BrModelFind(name)</code></td>
+                        <td><code>model</code>: Model / <code>name</code>: String</td>
+                        <td>Register or retrieve models by name.</td>
+                    </tr>
+                    <tr>
+                        <td><code>BrMaterialAdd(mat) / BrMaterialFind(name)</code></td>
+                        <td><code>mat</code>: Material / <code>name</code>: String</td>
+                        <td>Register or retrieve materials.</td>
+                    </tr>
+                    <tr>
+                        <td><code>BrMapAdd(pm) / BrMapFind(name)</code></td>
+                        <td><code>pm</code>: Pixelmap / <code>name</code>: String</td>
+                        <td>Register or retrieve textures/palettes.</td>
+                    </tr>
+                </tbody>
+            </table>
 
-<span class="comment">// Rendering</span>
-Br.<span class="function">BrZbSceneRender</span>(root, camera, colorBuf, depthBuf);</code></pre>
+            <h3>Scene Graph</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Function</th>
+                        <th>Parameters</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>BrActorAllocate(type)</code></td>
+                        <td><code>type</code>: ACTOR_TYPE</td>
+                        <td>Creates a new actor of the specified type.</td>
+                    </tr>
+                    <tr>
+                        <td><code>BrActorAdd(parent, child)</code></td>
+                        <td><code>parent</code>: Actor, <code>child</code>: Actor</td>
+                        <td>Links a child actor to a parent. Returns child.</td>
+                    </tr>
+                    <tr>
+                        <td><code>BrSceneRootAllocate()</code></td>
+                        <td>None</td>
+                        <td>Allocates a root container for the scene.</td>
+                    </tr>
+                </tbody>
+            </table>
 
-            <h3>High-level Loaders</h3>
-            <p>These convenience methods load assets from a URL and automatically register them in the global
-                registries.</p>
-            <ul>
-                <li><code>BrFmtModelLoad(url)</code>: Returns first <code>Model</code>.</li>
-                <li><code>BrFmtMaterialLoad(url)</code>: Returns first <code>Material</code>.</li>
-                <li><code>BrFmtPixelmapLoad(url)</code>: Returns first <code>Pixelmap</code>.</li>
-            </ul>
+            <h3>Rendering</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Function</th>
+                        <th>Parameters</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>BrZbSceneRender(root, cam, color, depth)</code></td>
+                        <td><code>root</code>, <code>cam</code>, <code>color</code>, <code>depth</code></td>
+                        <td>Executes a Z-buffered render of the actor tree.</td>
+                    </tr>
+                    <tr>
+                        <td><code>BrZbSceneRenderPrimitives(vp, prims, color, depth)</code></td>
+                        <td><code>vp</code>: Mat4, <code>prims</code>: Array, <code>color</code>, <code>depth</code></td>
+                        <td>Renders a flat list of meshes using a precomputed matrix.</td>
+                    </tr>
+                </tbody>
+            </table>
 
             <h3>Lights & Fog</h3>
-            <pre><code><span class="comment">// Quick light setup</span>
-<span class="keyword">const</span> sun = Br.<span class="function">BrLightAllocate</span>({ type: LIGHT_TYPE.DIRECT, color: 0xffffff });
-Br.<span class="function">BrLightEnable</span>(sun);
-
-<span class="comment">// Environment</span>
-Br.<span class="function">BrFogSet</span>(scene, { colour: 0x808080, hither: 10, yon: 50 });</code></pre>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Function</th>
+                        <th>Parameters</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>BrLightAllocate(opts)</code></td>
+                        <td><code>opts</code>: Object</td>
+                        <td>Creates a Light actor (e.g. {type, color, intensity}).</td>
+                    </tr>
+                    <tr>
+                        <td><code>BrLightEnable(actor) / BrLightDisable(actor)</code></td>
+                        <td><code>actor</code>: Actor (Light)</td>
+                        <td>Toggles the active state of a light.</td>
+                    </tr>
+                    <tr>
+                        <td><code>BrFogSet(scene, opts)</code></td>
+                        <td><code>scene</code>: SceneRoot, <code>opts</code>: Object</td>
+                        <td>Configures linear fog ({colour, hither, yon}).</td>
+                    </tr>
+                </tbody>
+            </table>
         </section>
 
         <section id="quickstart">
