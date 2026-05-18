@@ -1,0 +1,93 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>WBrenderer M1 — Spinning Triangle</title>
+  <style>
+    body { margin: 0; background: #111; color: #ccc; font-family: monospace; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+    canvas { image-rendering: pixelated; border: 1px solid #333; }
+    #hud { margin-top: 8px; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <h2>WBrenderer M1 — Spinning RGB Triangle</h2>
+  <canvas id="cv" width="640" height="480"></canvas>
+  <div id="hud">fps: --</div>
+
+  <script type="module">
+    import { Pixelmap, TYPE } from '../src/pixelmap/Pixelmap.js';
+    import { Renderer } from '../src/render/Renderer.js';
+    import * as Mat4 from '../src/math/Mat4.js';
+    import * as Mat34 from '../src/math/Mat34.js';
+
+    const W = 640, H = 480;
+    const cv = document.getElementById('cv');
+    const ctx = cv.getContext('2d');
+    const img = ctx.createImageData(W, H);
+
+    const color = new Pixelmap(W, H, TYPE.RGBX_8888);
+    const depth = new Pixelmap(W, H, TYPE.DEPTH_F32);
+    const renderer = new Renderer(color, depth);
+
+    // Three triangles forming a Y-style RGB fan. Flat-shaded only (M1),
+    // so we render them as 3 separate prims to get three colors.
+    // World windings chosen so that after the Renderer's Y-flip, screen-space
+    // area is positive (CW) and the back-face cull keeps them visible.
+    const triR = {
+      vertices: new Float32Array([0, 1, 0,  0, -0.2, 0,  -1, -1, 0]),
+      faces: new Uint16Array([0, 1, 2]),
+      stride: 3,
+    };
+    const triG = {
+      vertices: new Float32Array([0, 1, 0,  1, -1, 0,  0, -0.2, 0]),
+      faces: new Uint16Array([0, 1, 2]),
+      stride: 3,
+    };
+    const triB = {
+      vertices: new Float32Array([-1, -1, 0,  0, -0.2, 0,  1, -1, 0]),
+      faces: new Uint16Array([0, 1, 2]),
+      stride: 3,
+    };
+
+    const xform = Mat34.create();
+    const rotY = Mat34.create();
+    const trans = Mat34.create();
+    Mat34.translation(trans, 0, 0, -3);
+
+    const proj = Mat4.create();
+    Mat4.perspective(proj, Math.PI / 3, W / H, 0.1, 100);
+    const view = Mat4.create();
+    Mat4.lookAt(view, [0, 0, 0], [0, 0, -1], [0, 1, 0]);
+    const vp = Mat4.create();
+    Mat4.multiply(vp, proj, view);
+
+    const hud = document.getElementById('hud');
+    let frames = 0, lastT = performance.now(), fps = 0;
+
+    function frame(tMs) {
+      const t = tMs * 0.001;
+      Mat34.rotationY(rotY, t);
+      Mat34.multiply(xform, trans, rotY);
+
+      renderer.clear(0x101820);
+      renderer.renderScene(vp, [
+        { mesh: triR, transform: xform, color: 0xff3030 },
+        { mesh: triG, transform: xform, color: 0x30ff30 },
+        { mesh: triB, transform: xform, color: 0x3060ff },
+      ]);
+      color.blitToImageData(img);
+      ctx.putImageData(img, 0, 0);
+
+      frames++;
+      const now = performance.now();
+      if (now - lastT >= 500) {
+        fps = (frames * 1000 / (now - lastT)).toFixed(1);
+        hud.textContent = `fps: ${fps}`;
+        frames = 0; lastT = now;
+      }
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  </script>
+</body>
+</html>

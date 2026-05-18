@@ -1,0 +1,221 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>WBrenderer M5 — BRender sample port</title>
+  <style>
+    body { margin: 0; background: #111; color: #ccc; font-family: monospace; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+    canvas { image-rendering: pixelated; border: 1px solid #333; }
+    #hud { margin-top: 8px; font-size: 12px; }
+    pre { background: #222; padding: 12px; max-width: 800px; font-size: 11px; color: #999; }
+  </style>
+</head>
+<body>
+  <h2>WBrenderer M5 — BRender sample port</h2>
+  <canvas id="cv" width="800" height="600"></canvas>
+  <div id="hud">loading…</div>
+
+  <p style="max-width:800px;font-size:12px;color:#999">
+    Eagle car + per-material texture cutouts (the roof spike now renders as
+    a billboard with palette index 0 transparent), shaded by a directional
+    sun, written exclusively through the <code>Br.*</code> facade so the
+    code reads like a literal port of a BRender 1.3 C sample.
+  </p>
+
+  <script type="module">
+    import { Br, Mat34, PixelmapType, loadAct, makeCylinder, ACTOR_TYPE, Material, walkTree } from '../index.js';
+
+    const W = 800, H = 600;
+    const cv = document.getElementById('cv');
+    const ctx = cv.getContext('2d');
+    const img = ctx.createImageData(W, H);
+    const hud = document.getElementById('hud');
+
+    // ----- BrBegin equivalent: allocate framebuffer + depth buffer -----
+    Br.BrBegin();
+    const colour = Br.BrPixelmapAllocate(PixelmapType.RGBX_8888, W, H);
+    const depth  = Br.BrPixelmapAllocate(PixelmapType.DEPTH_F32, W, H);
+
+    async function fetchAB(url) {
+      const r = await fetch(url);
+      if (!r.ok) throw new Error(url + ' → ' + r.status);
+      return r.arrayBuffer();
+    }
+
+    async function main() {
+      // ----- Load model + materials + texture pixmaps -----
+      const datAB = await fetchAB('../../Source/DATA/MODELS/EAGLE.DAT');
+      const matAB = await fetchAB('../../Source/DATA/MATERIAL/EAGLE.MAT');
+      const pixAB = await fetchAB('../../Source/DATA/PIXELMAP/EAGLE.PIX');
+      const palAB = await fetchAB('../../Source/DATA/REG/PALETTES/DRRENDER.PAL');
+
+      const models = Br.BrFmtModelLoad(datAB);     // registers in modelRegistry
+      const mats   = Br.BrFmtMaterialLoad(matAB);  // registers in materialRegistry
+      const pms    = Br.BrFmtPixelmapLoad(pixAB);  // registers in mapRegistry
+
+      // Carmageddon's real palette. DRRENDER.PAL is a 256-entry pixmap
+      // (type RGBX_888) where each 4-byte entry is [pad=0, R, G, B].
+      // Repack into the [R,G,B,R,G,B,...] format the rasterizer expects.
+      const palPm = Br.BrFmtPixelmapLoad(palAB)[0];
+      const palette = new Uint8Array(256 * 3);
+      for (let i = 0; i < 256; i++) {
+        const o = i * 4;
+        palette[i * 3]     = palPm.pixels[o + 1];
+        palette[i * 3 + 1] = palPm.pixels[o + 2];
+        palette[i * 3 + 2] = palPm.pixels[o + 3];
+      }
+
+      // ----- Cross-reference: attach each material's pixmap + palette -----
+      for (const m of mats) {
+        if (m.colourMapName) {
+          const pm = Br.BrMapFind(m.colourMapName);
+          if (pm) {
+            m.colourMap = pm;
+            m.palette = palette;
+          }
+        }
+        // Spike billboards must render from both sides and key out index 0.
+        if (m.name === 'BGLSPIKE.MAT') {
+          m.flags |= Br.MATF.TWO_SIDED | Br.MATF.ALWAYS_VISIBLE;
+        }
+      }
+
+      // ----- Build the scene root + light + camera -----
+      const scene = Br.BrSceneRootAllocate();
+      scene.ambient = 0.25;
+
+      const sun = Br.BrLightAllocate({ type: Br.LIGHT_TYPE.DIRECT, colour: 0xfff0d0, intensity: 0.9 });
+      Mat34.rotationX(sun.transform, -0.9);
+      Br.BrActorAdd(scene, sun);
+
+      const cam = Br.BrActorAllocate(Br.ACTOR_TYPE.CAMERA);
+      cam.camera = new Br.Camera({ fovY: Math.PI / 3, aspect: W / H, hither: 0.1, yon: 60 });
+      Br.BrActorAdd(scene, cam);
+
+      // Set camera world position by hand: eye (0, 1.5, 3.5) looking at origin.
+      const cm = cam.transform;
+      cm[0] = 1; cm[1] = 0; cm[2] = 0;
+      cm[3] = 0; cm[4] = 1; cm[5] = 0;
+      cm[6] = 0; cm[7] = 0; cm[8] = 1;
+      cm[9] = 0; cm[10] = 1.5; cm[11] = 3.5;
+
+      // ----- Spawn the Eagle from its ACT (gives us the wheel hierarchy) -----
+      const model = models[0];
+      const carMaterials = model.materialNames.map(nm => Br.BrMaterialFind(nm));
+
+      // Register the body model under EAGLE.DAT so the ACT loader finds it.
+      // (The model loaded from the DAT has name "EAGLE.DAT" already; BrFmtModelLoad
+      //  registered it via Br.BrModelAdd.)
+      // Register a synthesized wheel model under WHEEL.DAT so each wheel
+      // actor in the ACT resolves to it. Carmageddon ships its real
+      // WHEEL.DAT elsewhere on disc; this stand-in is geometrically faithful.
+      // Cylinder sized to match Carmageddon's wheels relative to the body.
+      // Per-face material index = 0 across the whole mesh so the renderer
+      // uses our wheel material's texture (otherwise it'd take the actor
+      // default colour and skip the textured path).
+      // Derived from EAGLE.ACT geometry: wheel slot Y ≈ -0.04 and body
+      // base ≈ -0.08, so radius ~0.04. Width is ~half the gap between the
+      // wheel-slot X and the body half-width.
+      const wheelModel = makeCylinder(0.07, 0.07, 18);
+      wheelModel.name = 'WHEEL.DAT';
+      wheelModel.materialNames = ['BGLWEEL.MAT'];
+      wheelModel.faceMaterialIndex = new Uint16Array(wheelModel.faces.length / 3);
+      Br.BrModelAdd(wheelModel);
+
+      // Wheel material — point it at BGLWEEL.PIX from EAGLE.PIX and the
+      // real Carma palette; render two-sided so both rim caps stay visible
+      // regardless of orientation.
+      const wheelTex = Br.BrMapFind('bglweel.pix');
+      const wheelMat = new Material({
+        name: 'BGLWEEL.MAT',
+        colour: 0xffffff,
+        flags: Br.MATF.TWO_SIDED | Br.MATF.DISABLE_COLOUR_KEY,
+        colourMap: wheelTex,
+        palette,
+      });
+      Br.BrMaterialAdd(wheelMat);
+
+      const actAB = await fetchAB('../../Source/DATA/ACTORS/EAGLE.ACT');
+      const eagleActor = loadAct(actAB);
+
+      // Per-wheel size: muscle-car proportion (chunkier rears). Scaling each
+      // wheel actor's local transform compounds with the rotation that the
+      // body imparts on the whole tree, so the wheels stay attached.
+      const WHEEL_SCALE = {
+        // [radius factor, width factor]
+        front: [1.0, 1.0],
+        rear:  [1.05, 1.3],
+      };
+
+      walkTree(eagleActor, (a) => {
+        if (a.type !== ACTOR_TYPE.MODEL || !a.model) return;
+        if (a.modelName === 'EAGLE.DAT') {
+          a.materials = carMaterials;
+          a.material = 0xa0a0a0;
+          return;
+        }
+        if (a.modelName === 'WHEEL.DAT') {
+          a.materials = [wheelMat];
+          a.material = 0x303030;
+
+          // The cylinder is along X (width axis); radius is in YZ. Scale
+          // Y/Z by radius factor, X by width factor. Parent actor's
+          // transform from the ACT holds position only (no rotation), so
+          // we can post-multiply with a local scale safely.
+          const parentName = (a.parent && a.parent.name) || '';
+          const isRear = /^RL|^RR/i.test(parentName) || /^RL|^RR/i.test(a.name);
+          const [rFac, wFac] = isRear ? WHEEL_SCALE.rear : WHEEL_SCALE.front;
+          const m = a.transform;
+          // Mat34 layout: rows 0..2 are X/Y/Z basis. Scale by post-multiplying
+          // each basis row by the corresponding factor.
+          m[0] *= wFac; m[1] *= wFac; m[2] *= wFac;
+          m[3] *= rFac; m[4] *= rFac; m[5] *= rFac;
+          m[6] *= rFac; m[7] *= rFac; m[8] *= rFac;
+        }
+      });
+
+      Br.BrActorAdd(scene, eagleActor);
+
+      // The root EAGLE actor's transform from the ACT puts it almost at
+      // origin (Y≈0.11). The body lives at scale ~0.18 in model units, so
+      // scale it up for visibility.
+      const sclEagle = Mat34.create();
+      Mat34.identity(sclEagle);
+      sclEagle[0] = sclEagle[4] = sclEagle[8] = 4;
+
+      hud.textContent = `loaded: ${models.length} model, ${mats.length} materials, ${pms.length} pixmaps`;
+
+      // ----- Animation loop -----
+      const rotY = Mat34.create();
+      const tmp = Mat34.create();
+
+      let frames = 0, lastT = performance.now();
+
+      function frame(tMs) {
+        const t = tMs * 0.001;
+        Mat34.rotationY(rotY, t * 0.6);
+        Mat34.multiply(tmp, rotY, sclEagle);
+        eagleActor.transform.set(tmp);
+
+        Br.BrPixelmapFill(colour, 0x102030);
+        depth.pixels.fill(Infinity);
+        Br.BrZbSceneRender(scene, cam, colour, depth);
+        colour.blitToImageData(img);
+        ctx.putImageData(img, 0, 0);
+
+        frames++;
+        const now = performance.now();
+        if (now - lastT >= 500) {
+          const fps = (frames * 1000 / (now - lastT)).toFixed(1);
+          hud.textContent = `BrFmtLoad → BrZbSceneRender · ${fps} fps · ${models.length}m/${mats.length}mat/${pms.length}px`;
+          frames = 0; lastT = now;
+        }
+        requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    }
+
+    main().catch(e => { hud.textContent = 'error: ' + e.message; console.error(e); });
+  </script>
+</body>
+</html>

@@ -1,0 +1,116 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>WBrenderer M3 — Eagle</title>
+  <style>
+    body { margin: 0; background: #111; color: #ccc; font-family: monospace; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+    canvas { image-rendering: pixelated; border: 1px solid #333; }
+    #hud { margin-top: 8px; font-size: 12px; white-space: pre; text-align: left; }
+  </style>
+</head>
+<body>
+  <h2>WBrenderer M3 — Carmageddon Eagle (real .DAT)</h2>
+  <canvas id="cv" width="800" height="600"></canvas>
+  <div id="hud">loading…</div>
+
+  <script type="module">
+    import { Pixelmap, TYPE } from '../src/pixelmap/Pixelmap.js';
+    import { Renderer } from '../src/render/Renderer.js';
+    import { Actor, ACTOR_TYPE } from '../src/scene/Actor.js';
+    import { Camera } from '../src/scene/Camera.js';
+    import { Material } from '../src/scene/Material.js';
+    import { loadDat } from '../src/fmt/datLoader.js';
+    import * as Mat34 from '../src/math/Mat34.js';
+
+    const W = 800, H = 600;
+    const cv = document.getElementById('cv');
+    const ctx = cv.getContext('2d');
+    const img = ctx.createImageData(W, H);
+    const color = new Pixelmap(W, H, TYPE.RGBX_8888);
+    const depth = new Pixelmap(W, H, TYPE.DEPTH_F32);
+    const renderer = new Renderer(color, depth);
+    const hud = document.getElementById('hud');
+
+    // A small per-material colour palette for the Eagle. The materials
+    // referenced are the eight names from EAGLE.DAT's MAT_IDX. Anything
+    // unknown falls back to a hash-derived colour so different cars work
+    // too.
+    const NAME_COLOURS = {
+      'BGLSPIKE.MAT':  0x303030, // black spikes
+      'BGLSIDE.MAT':   0xc8c8c8, // chrome side panels
+      'BGLNOSE.MAT':   0xd0d0d0, // chrome nose
+      'BGLBOT.MAT':    0x202020, // dark undercarriage
+      'BGLUNDER.MAT':  0x404040,
+      'BGLTOP.MAT':    0xc04040, // body red
+      'DARKRED.MAT':   0x801010,
+      'DRSKY.MAT':     0x6090d0, // windshield blue
+    };
+    function colourFor(name) {
+      if (NAME_COLOURS[name] !== undefined) return NAME_COLOURS[name];
+      let h = 0;
+      for (let i = 0; i < name.length; i++) h = ((h * 31 + name.charCodeAt(i)) >>> 0);
+      return (h & 0xffffff) | 0x808080;
+    }
+
+    async function main() {
+      const res = await fetch('../../Source/DATA/MODELS/EAGLE.DAT');
+      if (!res.ok) { hud.textContent = 'Failed to load EAGLE.DAT (' + res.status + ')'; return; }
+      const ab = await res.arrayBuffer();
+      const models = loadDat(ab);
+      const model = models[0];
+
+      const materials = model.materialNames.map((nm) => new Material({ name: nm, colour: colourFor(nm) }));
+
+      const root = new Actor({ type: ACTOR_TYPE.NONE });
+      const car = new Actor({ type: ACTOR_TYPE.MODEL, model, material: 0xa0a0a0 });
+      car.materials = materials;
+      root.add(car);
+
+      const cam = new Actor({ type: ACTOR_TYPE.CAMERA });
+      cam.camera = new Camera({ fovY: Math.PI / 3, aspect: W / H, hither: 0.05, yon: 50 });
+      root.add(cam);
+
+      // Eagle bounding radius is ~0.5 game units. Scale up and translate to fit.
+      const carTrans = Mat34.create();
+      const carRotY = Mat34.create();
+      const carScale = Mat34.create();
+      Mat34.identity(carScale);
+      const s = 4; // scale factor
+      carScale[0] = s; carScale[4] = s; carScale[8] = s;
+
+      const tmp = Mat34.create();
+      const tmp2 = Mat34.create();
+
+      hud.textContent = `EAGLE.DAT loaded: ${model.vertices.length / 8} verts, ${model.faces.length / 3} faces, ${materials.length} materials`;
+
+      let frames = 0, lastT = performance.now();
+
+      function frame(tMs) {
+        const t = tMs * 0.001;
+        Mat34.rotationY(carRotY, t * 0.6);
+        Mat34.translation(carTrans, 0, -0.1, -2.5);
+        Mat34.multiply(tmp, carRotY, carScale);
+        Mat34.multiply(tmp2, carTrans, tmp);
+        car.transform.set(tmp2);
+
+        renderer.clear(0x102030);
+        renderer.renderTree(root, cam);
+        color.blitToImageData(img);
+        ctx.putImageData(img, 0, 0);
+
+        frames++;
+        const now = performance.now();
+        if (now - lastT >= 500) {
+          const fps = (frames * 1000 / (now - lastT)).toFixed(1);
+          hud.textContent = `EAGLE.DAT — ${model.vertices.length / 8} verts, ${model.faces.length / 3} faces, ${materials.length} materials   |   ${fps} fps`;
+          frames = 0; lastT = now;
+        }
+        requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    }
+    main();
+  </script>
+</body>
+</html>

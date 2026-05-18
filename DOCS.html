@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WBrenderer API Documentation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #070b10;
+            --sidebar-bg: #0b1118;
+            --card-bg: #0d151e;
+            --line: #263342;
+            --text: #e6edf5;
+            --muted: #9aa8b8;
+            --blue: #4f8cff;
+            --blue-glow: rgba(79, 140, 255, 0.2);
+            --green: #72e283;
+            --amber: #f5c84b;
+            --code-bg: #05080c;
+            --sans: 'Inter', system-ui, -apple-system, sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+        }
+
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--sans);
+            line-height: 1.6;
+            display: grid;
+            grid-template-columns: 280px 1fr;
+        }
+
+        /* Sidebar / Quick Menu */
+        nav.sidebar {
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            background: var(--sidebar-bg);
+            border-right: 1px solid var(--line);
+            padding: 2rem 1.5rem;
+            overflow-y: auto;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 2.5rem;
+            font-weight: 800;
+            font-size: 1.2rem;
+            color: white;
+        }
+
+        .logo-icon {
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(135deg, #38bdf8, #2563eb);
+            border-radius: 6px;
+            clip-path: polygon(50% 5%, 94% 82%, 60% 82%, 48% 58%, 35% 82%, 6% 82%);
+        }
+
+        nav ul { list-style: none; padding: 0; margin: 0; }
+        nav li { margin-bottom: 0.5rem; }
+        nav a {
+            text-decoration: none;
+            color: var(--muted);
+            font-size: 0.9rem;
+            display: block;
+            padding: 0.5rem 0.8rem;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        nav a:hover {
+            background: rgba(255,255,255,0.05);
+            color: var(--text);
+            transform: translateX(4px);
+        }
+
+        nav a.active {
+            background: var(--blue-glow);
+            color: var(--blue);
+            font-weight: 600;
+        }
+
+        .nav-group {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--line);
+            margin: 1.5rem 0 0.5rem 0.8rem;
+            font-weight: 800;
+        }
+
+        /* Content Area */
+        main {
+            padding: 4rem max(2rem, 10vw);
+            max-width: 1200px;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 { font-size: 3rem; font-weight: 800; margin-bottom: 1rem; letter-spacing: -0.03em; }
+        h2 { font-size: 1.8rem; margin-top: 4rem; border-bottom: 1px solid var(--line); padding-bottom: 0.5rem; color: var(--blue); }
+        h3 { font-size: 1.2rem; margin-top: 2rem; color: var(--text); }
+
+        p { color: var(--muted); margin-bottom: 1.5rem; }
+
+        /* Code Styling */
+        code {
+            font-family: var(--mono);
+            background: var(--code-bg);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: var(--amber);
+        }
+
+        pre {
+            background: var(--code-bg);
+            padding: 1.5rem;
+            border-radius: 12px;
+            overflow-x: auto;
+            border: 1px solid var(--line);
+            margin: 1.5rem 0;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        pre code {
+            background: transparent;
+            padding: 0;
+            color: var(--text);
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+
+        .keyword { color: #c693ff; }
+        .function { color: #6cb6ff; }
+        .string { color: #b6e880; }
+        .comment { color: #5f6b79; font-style: italic; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            background: var(--card-bg);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th { background: var(--line); text-align: left; padding: 1rem; font-size: 0.8rem; text-transform: uppercase; }
+        td { padding: 1rem; border-bottom: 1px solid var(--line); font-size: 0.9rem; }
+        tr:last-child td { border-bottom: none; }
+
+        /* Callouts */
+        .callout {
+            padding: 1rem 1.5rem;
+            border-left: 4px solid var(--blue);
+            background: rgba(79, 140, 255, 0.05);
+            border-radius: 0 8px 8px 0;
+            margin: 2rem 0;
+        }
+
+        @media (max-width: 900px) {
+            body { grid-template-columns: 1fr; }
+            nav.sidebar { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="logo-area">
+            <div class="logo-icon"></div>
+            <span>WBrenderer</span>
+        </div>
+        
+        <div class="nav-group">Getting Started</div>
+        <ul>
+            <li><a href="#intro" class="active">Introduction</a></li>
+            <li><a href="#quickstart">Quickstart</a></li>
+            <li><a href="#principles">Core Principles</a></li>
+        </ul>
+
+        <div class="nav-group">API Reference</div>
+        <ul>
+            <li><a href="#math">Math Library</a></li>
+            <li><a href="#pixelmap">Pixelmaps</a></li>
+            <li><a href="#scenegraph">Scene Graph</a></li>
+            <li><a href="#renderer">The Renderer</a></li>
+            <li><a href="#loaders">Format Loaders</a></li>
+        </ul>
+
+        <div class="nav-group">Legacy Support</div>
+        <ul>
+            <li><a href="#brender">BRender Facade</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <section id="intro">
+            <h1>WBrenderer JS API</h1>
+            <p>A high-fidelity software implementation of the classic BRender engine, written in pure ES6 with zero runtime dependencies. Optimized for high-performance pixel manipulation and nostalgic 90s-era 3D rendering.</p>
+        </section>
+
+        <section id="principles">
+            <h2>Core Principles</h2>
+            <ul>
+                <li><strong>Zero Dependencies:</strong> No npm installs required. Drop the folder and go.</li>
+                <li><strong>Data-Oriented Math:</strong> Matrices and Vectors are standard <code>Float32Array</code> buffers for speed and minimal GC pressure.</li>
+                <li><strong>Software Rasterization:</strong> Custom C-style scanline loops for flat, Gouraud, and textured paths.</li>
+            </ul>
+        </section>
+
+        <section id="math">
+            <h2>Math Library</h2>
+            <p>All operations are pure functions to avoid object allocation in hot paths.</p>
+            
+            <h3>Vec3 (3-Element Vector)</h3>
+            <pre><code><span class="keyword">import</span> { Vec3 } <span class="keyword">from</span> <span class="string">'wbrenderer'</span>;
+
+<span class="comment">// Create a Float32Array(3)</span>
+<span class="keyword">const</span> pos = Vec3.<span class="function">create</span>(<span class="number">0</span>, <span class="number">10</span>, <span class="number">0</span>);
+
+<span class="comment">// Standard operations (out, a, b)</span>
+Vec3.<span class="function">add</span>(pos, pos, [1, 0, 0]);
+Vec3.<span class="function">normalize</span>(pos, pos);</code></pre>
+
+            <h3>Mat34 (3x4 Affine Matrix)</h3>
+            <p>Used for all actor transformations. Compact representation of rotation and translation.</p>
+            <pre><code><span class="keyword">const</span> m = Mat34.<span class="function">create</span>(); <span class="comment">// Identity</span>
+Mat34.<span class="function">rotationY</span>(m, Math.PI / 4);</code></pre>
+        </section>
+
+        <section id="pixelmap">
+            <h2>Pixelmaps & Framebuffers</h2>
+            <p>Pixelmaps wrap raw buffers for color and depth data.</p>
+            <pre><code><span class="keyword">import</span> { Pixelmap, TYPE } <span class="keyword">from</span> <span class="string">'wbrenderer'</span>;
+
+<span class="keyword">const</span> color = <span class="keyword">new</span> <span class="function">Pixelmap</span>(320, 240, TYPE.RGBX_8888);
+<span class="keyword">const</span> depth = <span class="keyword">new</span> <span class="function">Pixelmap</span>(320, 240, TYPE.DEPTH_F32);
+
+color.<span class="function">clear</span>(0x101820); <span class="comment">// Dark navy clear</span></code></pre>
+        </section>
+
+        <section id="scenegraph">
+            <h2>Scene Graph</h2>
+            <p>WBrenderer uses an <code>Actor</code> hierarchy similar to BRender's V1DB system.</p>
+            
+            <div class="callout">
+                <strong>Note:</strong> All actors require a type (MODEL, CAMERA, LIGHT, or NONE).
+            </div>
+
+            <pre><code><span class="keyword">const</span> scene = <span class="keyword">new</span> <span class="function">SceneRoot</span>();
+
+<span class="keyword">const</span> car = <span class="keyword">new</span> <span class="function">Actor</span>({ 
+    type: ACTOR_TYPE.MODEL, 
+    model: eagleModel, 
+    material: 0xff0000 
+});
+
+scene.<span class="function">add</span>(car);</code></pre>
+        </section>
+
+        <section id="renderer">
+            <h2>The Renderer</h2>
+            <p>The <code>Renderer</code> class processes the scene tree and executes the rasterization pipelines.</p>
+            <pre><code><span class="keyword">const</span> r = <span class="keyword">new</span> <span class="function">Renderer</span>(color, depth);
+
+<span class="comment">// One-shot render of a full tree from a specific camera</span>
+r.<span class="function">renderTree</span>(scene, cameraActor);
+
+<span class="comment">// Blit to a Canvas2D context</span>
+color.<span class="function">blitToImageData</span>(myImageData);</code></pre>
+        </section>
+
+        <section id="loaders">
+            <h2>Format Loaders</h2>
+            <p>Native support for binary Carmageddon/BRender assets.</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Method</th>
+                        <th>Target Format</th>
+                        <th>Returns</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>loadDat(buffer)</code></td>
+                        <td>.DAT</td>
+                        <td>Array of <code>Model</code> objects</td>
+                    </tr>
+                    <tr>
+                        <td><code>loadMat(buffer)</code></td>
+                        <td>.MAT</td>
+                        <td>Array of <code>Material</code> objects</td>
+                    </tr>
+                    <tr>
+                        <td><code>loadPix(buffer)</code></td>
+                        <td>.PIX</td>
+                        <td>Array of <code>Pixelmap</code> (Bitmaps)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section id="brender">
+            <h2>BRender Facade (Br.*)</h2>
+            <p>For porting legacy C code, use the <code>Br</code> namespace which provides a 1:1 mapping to classic function names.</p>
+            <pre><code><span class="keyword">import</span> { Br } <span class="keyword">from</span> <span class="string">'wbrenderer'</span>;
+
+Br.<span class="function">BrBegin</span>();
+<span class="keyword">const</span> model = Br.<span class="function">BrFmtModelLoad</span>(<span class="string">'EAGLE.DAT'</span>); <span class="comment">// Load a model</span>
+<span class="keyword">const</span> act = Br.<span class="function">BrActorAllocate</span>(ACTOR_TYPE.MODEL); <span class="comment">// Create an actor</span>
+Br.<span class="function">BrActorAdd</span>(root, act); <span class="comment">// Add to scene</span></code></pre>
+        </section>
+
+        <section id="quickstart">
+            <h2>Quickstart: Plane and Cube</h2>
+            <p>This example demonstrates how to set up a basic scene with a camera, a light, a plane, and a rotating cube.</p>
+            <pre><code><span class="keyword">import</span> {
+  Pixelmap, TYPE, Renderer, SceneRoot, Actor, ACTOR_TYPE,
+  Camera, Light, LIGHT_TYPE, makeCube, makePlane, Mat34
+} <span class="keyword">from</span> <span class="string">'wbrenderer'</span>;
+
+<span class="keyword">export</span> <span class="keyword">async</span> <span class="keyword">function</span> <span class="function">createScene</span>({ canvas, wbr }) {
+  <span class="keyword">const</span> W = canvas.<span class="prop">width</span>;
+  <span class="keyword">const</span> H = canvas.<span class="prop">height</span>;
+
+  <span class="keyword">const</span> color = <span class="keyword">new</span> <span class="function">Pixelmap</span>(W, H, TYPE.RGBX_8888);
+  <span class="keyword">const</span> depth = <span class="keyword">new</span> <span class="function">Pixelmap</span>(W, H, TYPE.DEPTH_F32);
+  <span class="keyword">const</span> renderer = <span class="keyword">new</span> <span class="function">Renderer</span>(color, depth);
+
+  <span class="keyword">const</span> scene = <span class="keyword">new</span> <span class="function">SceneRoot</span>();
+  scene.<span class="prop">ambient</span> = <span class="num">0.2</span>; <span class="comment">// Some ambient light</span>
+
+  <span class="comment">// Camera setup</span>
+  <span class="keyword">const</span> cam = <span class="keyword">new</span> <span class="function">Actor</span>({ type: ACTOR_TYPE.CAMERA });
+  cam.<span class="prop">camera</span> = <span class="keyword">new</span> <span class="function">Camera</span>({ fovY: Math.<span class="prop">PI</span> / <span class="num">3</span>, aspect: W / H, hither: <span class="num">0.1</span>, yon: <span class="num">100</span> });
+  Mat34.<span class="function">translation</span>(cam.<span class="prop">transform</span>, <span class="num">0</span>, <span class="num">1.5</span>, <span class="num">5</span>);
+  Mat34.<span class="function">rotationX</span>(cam.<span class="prop">transform</span>, -Math.<span class="prop">PI</span> / <span class="num">10</span>); <span class="comment">// Look slightly down</span>
+  scene.<span class="function">add</span>(cam);
+
+  <span class="comment">// Light setup</span>
+  <span class="keyword">const</span> light = <span class="keyword">new</span> <span class="function">Actor</span>({ type: ACTOR_TYPE.LIGHT });
+  light.<span class="prop">light</span> = <span class="keyword">new</span> <span class="function">Light</span>(LIGHT_TYPE.DIRECT);
+  light.<span class="prop">light</span>.<span class="prop">color</span> = <span class="num">0xffffff</span>;
+  light.<span class="prop">light</span>.<span class="prop">intensity</span> = <span class="num">1.0</span>;
+  Mat34.<span class="function">rotationY</span>(light.<span class="prop">transform</span>, Math.<span class="prop">PI</span> / <span class="num">4</span>);
+  Mat34.<span class="function">rotationX</span>(light.<span class="prop">transform</span>, -Math.<span class="prop">PI</span> / <span class="num">3</span>);
+  scene.<span class="function">add</span>(light);
+
+  <span class="comment">// Create a plane</span>
+  <span class="keyword">const</span> planeModel = <span class="function">makePlane</span>(<span class="num">10</span>);
+  <span class="keyword">const</span> planeActor = <span class="keyword">new</span> <span class="function">Actor</span>({ type: ACTOR_TYPE.MODEL, model: planeModel, material: <span class="num">0x404040</span> });
+  scene.<span class="function">add</span>(planeActor);
+
+  <span class="comment">// Create a rotating cube</span>
+  <span class="keyword">const</span> cubeModel = <span class="function">makeCube</span>(<span class="num">1</span>);
+  <span class="keyword">const</span> cubeActor = <span class="keyword">new</span> <span class="function">Actor</span>({ type: ACTOR_TYPE.MODEL, model: cubeModel, material: <span class="num">0x0077ff</span> });
+  Mat34.<span class="function">translation</span>(cubeActor.<span class="prop">transform</span>, <span class="num">0</span>, <span class="num">0.5</span>, <span class="num">0</span>);
+  scene.<span class="function">add</span>(cubeActor);
+
+  <span class="comment">// Animation loop (optional)</span>
+  <span class="keyword">const</span> <span class="function">tick</span> = (t) => {
+    Mat34.<span class="function">rotationY</span>(cubeActor.<span class="prop">transform</span>, t);
+    Mat34.<span class="function">translation</span>(cubeActor.<span class="prop">transform</span>, <span class="num">0</span>, <span class="num">0.5</span> + Math.<span class="function">sin</span>(t * <span class="num">2</span>) * <span class="num">0.2</span>, <span class="num">0</span>);
+  };
+
+  <span class="keyword">return</span> { renderer, scene, camera: cam, color, depth, tick };
+}
+</code></pre>
+        </section>
+
+        <footer style="margin-top: 6rem; padding: 2rem 0; border-top: 1px solid var(--line); color: var(--line);">
+            &copy; 2024 WBrenderer Engine | Documentation v0.1
+        </footer>
+    </main>
+
+    <script>
+        // Simple script to highlight active section in sidebar
+        const sections = document.querySelectorAll('section');
+        const navLinks = document.querySelectorAll('nav a');
+
+        window.addEventListener('scroll', () => {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (pageYOffset >= sectionTop - 100) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href').includes(current)) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

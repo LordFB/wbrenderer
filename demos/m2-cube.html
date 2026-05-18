@@ -1,0 +1,94 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>WBrenderer M2 — Cube + Orbiting Sphere</title>
+  <style>
+    body { margin: 0; background: #111; color: #ccc; font-family: monospace; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+    canvas { image-rendering: pixelated; border: 1px solid #333; }
+    #hud { margin-top: 8px; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <h2>WBrenderer M2 — Shaded Cube + Orbiting Sphere</h2>
+  <canvas id="cv" width="800" height="600"></canvas>
+  <div id="hud">fps: --</div>
+
+  <script type="module">
+    import { Pixelmap, TYPE } from '../src/pixelmap/Pixelmap.js';
+    import { Renderer } from '../src/render/Renderer.js';
+    import { Actor, ACTOR_TYPE } from '../src/scene/Actor.js';
+    import { Camera } from '../src/scene/Camera.js';
+    import { makeCube, makeSphere } from '../src/scene/primitives.js';
+    import * as Mat34 from '../src/math/Mat34.js';
+
+    const W = 800, H = 600;
+    const cv = document.getElementById('cv');
+    const ctx = cv.getContext('2d');
+    const img = ctx.createImageData(W, H);
+
+    const color = new Pixelmap(W, H, TYPE.RGBX_8888);
+    const depth = new Pixelmap(W, H, TYPE.DEPTH_F32);
+    const renderer = new Renderer(color, depth);
+
+    const root = new Actor({ type: ACTOR_TYPE.NONE });
+
+    const cube = new Actor({ type: ACTOR_TYPE.MODEL, model: makeCube(1.2), material: 0xff8030 });
+    root.add(cube);
+
+    const sphere = new Actor({ type: ACTOR_TYPE.MODEL, model: makeSphere(0.35, 12, 18), material: 0x40a0ff });
+    root.add(sphere);
+
+    const cam = new Actor({ type: ACTOR_TYPE.CAMERA });
+    cam.camera = new Camera({ fovY: Math.PI / 3, aspect: W / H, hither: 0.1, yon: 100 });
+    Mat34.translation(cam.transform, 0, 0, 0);
+    root.add(cam);
+
+    const cubeXform = Mat34.create();
+    const cubeRotY = Mat34.create();
+    const cubeRotX = Mat34.create();
+    const cubeRotComp = Mat34.create();
+    const cubeTrans = Mat34.create();
+    Mat34.translation(cubeTrans, 0, 0, -4.5);
+
+    const sphereXform = Mat34.create();
+    const sphereTrans = Mat34.create();
+
+    const hud = document.getElementById('hud');
+    let frames = 0, lastT = performance.now();
+
+    function frame(tMs) {
+      const t = tMs * 0.001;
+
+      // Cube spins on Y and X.
+      Mat34.rotationY(cubeRotY, t * 0.7);
+      Mat34.rotationX(cubeRotX, t * 0.4);
+      Mat34.multiply(cubeRotComp, cubeRotY, cubeRotX);
+      Mat34.multiply(cubeXform, cubeTrans, cubeRotComp);
+      cube.transform.set(cubeXform);
+
+      // Sphere orbits the cube on the XZ plane.
+      const orbitR = 2.2;
+      const ox = Math.cos(t * 1.5) * orbitR;
+      const oz = Math.sin(t * 1.5) * orbitR;
+      Mat34.translation(sphereTrans, ox, Math.sin(t * 2) * 0.4, -4.5 + oz);
+      sphere.transform.set(sphereTrans);
+
+      renderer.clear(0x101820);
+      renderer.renderTree(root, cam);
+      color.blitToImageData(img);
+      ctx.putImageData(img, 0, 0);
+
+      frames++;
+      const now = performance.now();
+      if (now - lastT >= 500) {
+        const fps = (frames * 1000 / (now - lastT)).toFixed(1);
+        hud.textContent = `fps: ${fps}`;
+        frames = 0; lastT = now;
+      }
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  </script>
+</body>
+</html>
