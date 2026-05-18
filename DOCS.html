@@ -35,6 +35,28 @@
             scroll-behavior: smooth;
         }
 
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--line);
+            border-radius: 5px;
+            border: 2px solid var(--bg);
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--muted);
+        }
+
+        /* Firefox Support */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: var(--line) var(--bg);
+        }
+
         body {
             margin: 0;
             background: var(--bg);
@@ -56,6 +78,20 @@
             overflow-y: auto;
         }
 
+        /* Sidebar Specific Scrollbar */
+        nav.sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+        nav.sidebar::-webkit-scrollbar-track {
+            background: var(--sidebar-bg);
+        }
+        nav.sidebar::-webkit-scrollbar-thumb {
+            background: var(--line);
+        }
+        nav.sidebar::-webkit-scrollbar-thumb:hover {
+            background: var(--blue);
+        }
+
         .logo-area {
             display: flex;
             align-items: center;
@@ -64,6 +100,33 @@
             font-weight: 800;
             font-size: 1.2rem;
             color: white;
+        }
+
+        .search-container {
+            margin-bottom: 1.5rem;
+            position: sticky;
+            top: 0;
+            background: var(--sidebar-bg);
+            padding-bottom: 0.5rem;
+            z-index: 20;
+        }
+
+        #api-search {
+            width: 100%;
+            background: var(--code-bg);
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            padding: 0.6rem 0.8rem;
+            color: var(--text);
+            font-family: var(--sans);
+            font-size: 0.85rem;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        #api-search:focus {
+            border-color: var(--blue);
+            box-shadow: 0 0 0 2px var(--blue-glow);
         }
 
         .logo-icon {
@@ -178,6 +241,7 @@
             border: 1px solid var(--line);
             margin: 1.5rem 0;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            position: relative;
         }
 
         pre code {
@@ -186,6 +250,37 @@
             color: var(--text);
             font-size: 0.85rem;
             line-height: 1.5;
+        }
+
+        .copy-button {
+            position: absolute;
+            top: 0.8rem;
+            right: 0.8rem;
+            background: var(--sidebar-bg);
+            border: 1px solid var(--line);
+            color: var(--muted);
+            padding: 0.4rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-family: var(--sans);
+            cursor: pointer;
+            transition: all 0.2s;
+            opacity: 0;
+            z-index: 10;
+        }
+
+        pre:hover .copy-button {
+            opacity: 1;
+        }
+
+        .copy-button:hover {
+            background: var(--line);
+            color: var(--text);
+        }
+
+        .copy-button.copied {
+            color: var(--green);
+            border-color: var(--green);
         }
 
         .keyword {
@@ -242,6 +337,13 @@
             margin: 2rem 0;
         }
 
+        mark.search-highlight {
+            background: rgba(79, 140, 255, 0.4);
+            color: var(--text);
+            padding: 0 1px;
+            border-radius: 2px;
+        }
+
         @media (max-width: 900px) {
             body {
                 grid-template-columns: 1fr;
@@ -261,20 +363,28 @@
             <span>WBrenderer</span>
         </div>
 
+        <div class="search-container">
+            <input type="text" id="api-search" placeholder="Search API..." autocomplete="off">
+        </div>
+
         <div class="nav-group">Getting Started</div>
         <ul>
             <li><a href="#intro" class="active">Introduction</a></li>
-            <li><a href="#quickstart">Quickstart</a></li>
             <li><a href="#principles">Core Principles</a></li>
         </ul>
 
         <div class="nav-group">API Reference</div>
         <ul>
+            <li><a href="#datastructures">Data Structures</a></li>
             <li><a href="#math">Math Library</a></li>
             <li><a href="#pixelmap">Pixelmaps</a></li>
             <li><a href="#scenegraph">Scene Graph</a></li>
+            <li><a href="#cameras-lights">Cameras & Lights</a></li>
+            <li><a href="#material">Materials & Flags</a></li>
             <li><a href="#renderer">The Renderer</a></li>
+            <li><a href="#resizing">Window Resizing</a></li>
             <li><a href="#loaders">Format Loaders</a></li>
+            <li><a href="#registry">Asset Registry</a></li>
         </ul>
 
         <div class="nav-group">Legacy Support</div>
@@ -284,6 +394,7 @@
         <div class="nav-group">Quick Start</div>
         <ul>
             <li><a href="#quickstart">Quickstart</a></li>
+            <li><a href="#physics">Physics Actors</a></li>
         </ul>
     </nav>
 
@@ -306,6 +417,135 @@
             </ul>
         </section>
 
+        <section id="datastructures">
+            <h2>Data Structures</h2>
+            <p>The engine relies on a small set of core classes and enums to manage scene state and assets.</p>
+
+            <h3>Actor</h3>
+            <p>The <code>Actor</code> is the fundamental node of the scene graph. It handles hierarchy and spatial transformation.</p>
+            <table>
+                <thead>
+                    <tr><th>Property</th><th>Type</th><th>Description</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>type</code></td><td><code>ACTOR_TYPE</code></td><td>Determines actor behavior (Model, Camera, etc).</td></tr>
+                    <tr><td><code>transform</code></td><td><code>Mat34</code></td><td>Local-to-parent transformation matrix.</td></tr>
+                    <tr><td><code>model</code></td><td><code>Model</code></td><td>The geometry to render (if type is <code>MODEL</code>).</td></tr>
+                    <tr><td><code>material</code></td><td><code>Number</code></td><td>Fallback 0xRRGGBB color if no materials are set.</td></tr>
+                    <tr><td><code>materials</code></td><td><code>Material[]</code></td><td>Array of materials indexed by the model's face data.</td></tr>
+                    <tr><td><code>camera</code></td><td><code>Camera</code></td><td>Camera settings (if type is <code>CAMERA</code>).</td></tr>
+                    <tr><td><code>light</code></td><td><code>Light</code></td><td>Light settings (if type is <code>LIGHT</code>).</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Model</h3>
+            <p>A <code>Model</code> contains the geometry data loaded from <code>.DAT</code> files or generated via primitives.</p>
+            <table>
+                <thead>
+                    <tr><th>Property</th><th>Type</th><th>Description</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>name</code></td><td><code>String</code></td><td>Identifier used for registry lookups.</td></tr>
+                    <tr><td><code>vertices</code></td><td><code>Float32Array</code></td><td>Packed vertex data (x, y, z, nx, ny, nz, u, v).</td></tr>
+                    <tr><td><code>faces</code></td><td><code>Uint16Array</code></td><td>Vertex indices forming triangles.</td></tr>
+                    <tr><td><code>materialNames</code></td><td><code>String[]</code></td><td>List of material identifiers referenced by faces.</td></tr>
+                    <tr><td><code>faceMaterialIndex</code></td><td><code>Uint16Array</code></td><td>Index into the actor's material array per face.</td></tr>
+                </tbody>
+            </table>
+
+            <h4>Example: Manual Model Construction</h4>
+            <p>You can create custom geometry by packing raw arrays into the interleaved format expected by the renderer.</p>
+            <pre><code><span class="keyword">import</span> { Model, makeVertices } <span class="keyword">from</span> <span class="string">'wbrenderer'</span>;
+
+<span class="comment">// 1. Raw geometric data</span>
+<span class="keyword">const</span> positions = <span class="keyword">new</span> <span class="function">Float32Array</span>([
+    -<span class="num">1</span>, -<span class="num">1</span>, <span class="num">0</span>,  <span class="comment">// v0</span>
+     <span class="num">1</span>, -<span class="num">1</span>, <span class="num">0</span>,  <span class="comment">// v1</span>
+     <span class="num">0</span>,  <span class="num">1</span>, <span class="num">0</span>   <span class="comment">// v2</span>
+]);
+
+<span class="keyword">const</span> uvs = <span class="keyword">new</span> <span class="function">Float32Array</span>([
+    <span class="num">0</span>, <span class="num">0</span>,
+    <span class="num">1</span>, <span class="num">0</span>,
+    <span class="num">0.5</span>, <span class="num">1</span>
+]);
+
+<span class="comment">// 2. Pack into interleaved vertex buffer (stride 8: x,y,z, nx,ny,nz, u,v)</span>
+<span class="comment">// Pass null for normals to let the renderer auto-calculate face normals.</span>
+<span class="keyword">const</span> vertices = <span class="function">makeVertices</span>(positions, <span class="keyword">null</span>, uvs);
+
+<span class="comment">// 3. Create the model with an index array (faces)</span>
+<span class="keyword">const</span> faces = <span class="keyword">new</span> <span class="function">Uint16Array</span>([<span class="num">0</span>, <span class="num">1</span>, <span class="num">2</span>]);
+<span class="keyword">const</span> myModel = <span class="keyword">new</span> <span class="function">Model</span>(vertices, faces, { name: <span class="string">'triangle.dat'</span> });</code></pre>
+
+            <h4>Example: Per-Face Materials</h4>
+            <p>To render a model with multiple materials, assign an array to <code>actor.materials</code>. The renderer uses the <code>faceMaterialIndex</code> from the model to look up which material to use for each triangle.</p>
+            <pre><code><span class="keyword">import</span> { Actor, ACTOR_TYPE, Br } <span class="keyword">from</span> <span class="string">'wbrenderer'</span>;
+
+<span class="keyword">const</span> car = <span class="keyword">new</span> <span class="function">Actor</span>({ type: ACTOR_TYPE.MODEL, model: carModel });
+
+<span class="comment">// Option A: Resolve materials from the global registry using model metadata.</span>
+<span class="comment">// This is the standard approach after using BrFmtMaterialLoad().</span>
+car.materials = carModel.materialNames.<span class="function">map</span>(name => Br.<span class="function">BrMaterialFind</span>(name));
+
+<span class="comment">// Option B: Manually define a material list.</span>
+<span class="comment">// The model's faceMaterialIndex values will index into this array.</span>
+car.materials = [bodyMat, tireMat, glassMat];</code></pre>
+
+            <h3>Material</h3>
+            <p>Defines the surface appearance of geometry.</p>
+            <table>
+                <thead>
+                    <tr><th>Property</th><th>Type</th><th>Description</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>colour</code></td><td><code>Number</code></td><td>Base 0xRRGGBB color.</td></tr>
+                    <tr><td><code>flags</code></td><td><code>MATF</code></td><td>Bitset for lighting, transparency, and culling.</td></tr>
+                    <tr><td><code>colourMap</code></td><td><code>Pixelmap</code></td><td>The texture to apply (palette-indexed).</td></tr>
+                    <tr><td><code>palette</code></td><td><code>Uint8Array</code></td><td>256-entry RGB palette (stride 3) for the texture.</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Pixelmap</h3>
+            <p>A generic buffer for image or depth data.</p>
+            <table>
+                <thead>
+                    <tr><th>Property</th><th>Type</th><th>Description</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>width / height</code></td><td><code>Number</code></td><td>Dimensions in pixels.</td></tr>
+                    <tr><td><code>type</code></td><td><code>PixelmapType</code></td><td>Memory layout (e.g. RGBX_8888 or DEPTH_F32).</td></tr>
+                    <tr><td><code>pixels</code></td><td><code>TypedArray</code></td><td>The raw pixel buffer.</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Constants & Enums</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                <div>
+                    <h4>ACTOR_TYPE</h4>
+                    <table>
+                        <thead><tr><th>Value</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>NONE</code></td><td>Empty container node.</td></tr>
+                            <tr><td><code>MODEL</code></td><td>Visual geometry node.</td></tr>
+                            <tr><td><code>CAMERA</code></td><td>Viewpoint node.</td></tr>
+                            <tr><td><code>LIGHT</code></td><td>Light source node.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div>
+                    <h4>PixelmapType</h4>
+                    <table>
+                        <thead><tr><th>Value</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>RGBX_8888</code></td><td>32-bit color (8888).</td></tr>
+                            <tr><td><code>DEPTH_F32</code></td><td>32-bit floating point depth.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
         <section id="math">
             <h2>Math Library</h2>
             <p>All operations are pure functions to avoid object allocation in hot paths.</p>
@@ -320,10 +560,133 @@
 Vec3.<span class="function">add</span>(pos, pos, [1, 0, 0]);
 Vec3.<span class="function">normalize</span>(pos, pos);</code></pre>
 
+            <table>
+                <thead>
+                    <tr>
+                        <th>Function</th>
+                        <th>Parameters</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>create(x, y, z)</code></td>
+                        <td><code>x, y, z</code>: Numbers (Optional)</td>
+                        <td>Creates a new <code>Float32Array(3)</code>.</td>
+                    </tr>
+                    <tr>
+                        <td><code>add / sub(out, a, b)</code></td>
+                        <td><code>out, a, b</code>: Vec3</td>
+                        <td>Vector addition or subtraction.</td>
+                    </tr>
+                    <tr>
+                        <td><code>scale(out, a, s)</code></td>
+                        <td><code>out, a</code>: Vec3, <code>s</code>: Number</td>
+                        <td>Scales vector <code>a</code> by scalar <code>s</code>.</td>
+                    </tr>
+                    <tr>
+                        <td><code>dot(a, b)</code></td>
+                        <td><code>a, b</code>: Vec3</td>
+                        <td>Returns the dot product (scalar).</td>
+                    </tr>
+                    <tr>
+                        <td><code>cross(out, a, b)</code></td>
+                        <td><code>out, a, b</code>: Vec3</td>
+                        <td>Calculates cross product.</td>
+                    </tr>
+                    <tr>
+                        <td><code>length(a) / normalize(out, a)</code></td>
+                        <td><code>out, a</code>: Vec3</td>
+                        <td>Calculates magnitude or unit vector.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Mat4 (4x4 Matrix)</h3>
+            <p>Used primarily for projection and view transformations. Column-major 16-element array.</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Function</th>
+                        <th>Parameters</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>create() / identity(out)</code></td>
+                        <td><code>out</code>: Mat4</td>
+                        <td>Allocates or resets a 4x4 identity matrix.</td>
+                    </tr>
+                    <tr>
+                        <td><code>multiply(out, a, b)</code></td>
+                        <td><code>out, a, b</code>: Mat4</td>
+                        <td>Matrix multiplication (<code>out = a * b</code>).</td>
+                    </tr>
+                    <tr>
+                        <td><code>perspective(out, fovY, asp, n, f)</code></td>
+                        <td><code>out</code>: Mat4, <code>fovY, asp, n, f</code>: Numbers</td>
+                        <td>Builds a perspective projection matrix.</td>
+                    </tr>
+                    <tr>
+                        <td><code>lookAt(out, eye, tgt, up)</code></td>
+                        <td><code>out</code>: Mat4, <code>eye, tgt, up</code>: Vec3</td>
+                        <td>Builds a view matrix looking from eye to target.</td>
+                    </tr>
+                    <tr>
+                        <td><code>transformPoint(out, m, p)</code></td>
+                        <td><code>out</code>: Vec4, <code>m</code>: Mat4, <code>p</code>: Vec3</td>
+                        <td>Transforms a 3D point into clip space.</td>
+                    </tr>
+                </tbody>
+            </table>
+
             <h3>Mat34 (3x4 Affine Matrix)</h3>
             <p>Used for all actor transformations. Compact representation of rotation and translation.</p>
             <pre><code><span class="keyword">const</span> m = Mat34.<span class="function">create</span>(); <span class="comment">// Identity</span>
 Mat34.<span class="function">rotationY</span>(m, Math.PI / 4);</code></pre>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Function</th>
+                        <th>Parameters</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>create() / identity(out)</code></td>
+                        <td><code>out</code>: Mat34</td>
+                        <td>Allocates or resets a 3x4 identity affine matrix.</td>
+                    </tr>
+                    <tr>
+                        <td><code>translation(out, x, y, z)</code></td>
+                        <td><code>out</code>: Mat34, <code>x, y, z</code>: Numbers</td>
+                        <td>Sets a translation matrix.</td>
+                    </tr>
+                    <tr>
+                        <td><code>rotationX/Y/Z(out, rad)</code></td>
+                        <td><code>out</code>: Mat34, <code>rad</code>: Number (Radians)</td>
+                        <td>Sets a rotation matrix.</td>
+                    </tr>
+                    <tr>
+                        <td><code>multiply(out, a, b)</code></td>
+                        <td><code>out, a, b</code>: Mat34</td>
+                        <td>Multiplies two affine matrices.</td>
+                    </tr>
+                    <tr>
+                        <td><code>transformPoint(out, m, p)</code></td>
+                        <td><code>out</code>: Vec3, <code>m</code>: Mat34, <code>p</code>: Vec3</td>
+                        <td>Transforms a 3D point.</td>
+                    </tr>
+                    <tr>
+                        <td><code>toMat4(out, m)</code></td>
+                        <td><code>out</code>: Mat4, <code>m</code>: Mat34</td>
+                        <td>Promotes a 3x4 affine matrix to a full 4x4.</td>
+                    </tr>
+                </tbody>
+            </table>
         </section>
 
         <section id="pixelmap">
@@ -354,6 +717,220 @@ color.<span class="function">clear</span>(0x101820); <span class="comment">// Da
 });
 
 scene.<span class="function">add</span>(car);</code></pre>
+
+            <h3>Traversal & Custom Properties</h3>
+            <p>The <code>walkTree</code> utility provides a way to traverse the entire hierarchy starting from a specific
+                root. Because <code>Actor</code> is a standard class, you can attach arbitrary data to actors for use
+                during these traversals.</p>
+
+            <pre><code><span class="keyword">import</span> { walkTree } <span class="keyword">from</span> <span class="string">'wbrenderer'</span>;
+
+<span class="comment">// 1. Tagging actors with custom metadata during setup</span>
+<span class="keyword">const</span> car = <span class="keyword">new</span> <span class="function">Actor</span>({ type: ACTOR_TYPE.MODEL, model: carModel });
+car.isVehicleBody = <span class="keyword">true</span>;
+car.health = <span class="num">100</span>;
+
+<span class="comment">// 2. Using walkTree to find and process tagged actors</span>
+<span class="function">walkTree</span>(scene, (actor) => {
+    <span class="comment">// Identify actors by custom properties or model names</span>
+    <span class="keyword">if</span> (actor.isVehicleBody) {
+        <span class="comment">// Perform vehicle-specific logic</span>
+        actor.health -= <span class="num">10</span>;
+    }
+
+    <span class="comment">// modelName is often populated by loaders for Actors in a hierarchy</span>
+    <span class="keyword">if</span> (actor.modelName === <span class="string">'WHEEL.DAT'</span>) {
+        <span class="comment">// Update wheel rotation, or link specialized wheel materials</span>
+    }
+});</code></pre>
+            <p>This pattern is highly effective for post-processing hierarchies loaded from <code>.ACT</code> files,
+                where you may need to resolve materials or attach physics proxy objects to specific sub-models based on
+                their names or tags.</p>
+        </section>
+
+        <section id="cameras-lights">
+            <h2>Cameras & Lights</h2>
+            <p>Settings for viewpoints and illumination sources within the scene hierarchy.</p>
+
+            <h3>CAMERA_TYPE</h3>
+            <p>Determines the projection model used by the camera actor.</p>
+            <table>
+                <thead>
+                    <tr><th>Type</th><th>Description</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>CAMERA_TYPE.PERSPECTIVE</code></td><td>Standard perspective projection. Requires <code>fovY</code> and <code>aspect</code>.</td></tr>
+                    <tr><td><code>CAMERA_TYPE.PARALLEL</code></td><td>Orthographic projection. Distances do not affect object size.</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Camera Properties</h3>
+            <table>
+                <thead>
+                    <tr><th>Property</th><th>Type</th><th>Description</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>fovY</code></td><td>Number</td><td>Vertical field of view in radians. Default is ~60&deg; (<code>Math.PI / 3</code>).</td></tr>
+                    <tr><td><code>aspect</code></td><td>Number</td><td>Width / Height ratio (e.g., <code>800 / 600</code>).</td></tr>
+                    <tr><td><code>hither</code></td><td>Number</td><td>Near clipping plane. Minimal recommended value: 0.05.</td></tr>
+                    <tr><td><code>yon</code></td><td>Number</td><td>Far clipping plane. Geometry beyond this is culled.</td></tr>
+                </tbody>
+            </table>
+
+            <h3>LIGHT_TYPE</h3>
+            <p>Determines how light is emitted from the actor's position or orientation.</p>
+            <table>
+                <thead>
+                    <tr><th>Type</th><th>Description</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>LIGHT_TYPE.DIRECT</code></td><td>Infinite distance light (Sun). Parallel rays based on actor orientation.</td></tr>
+                    <tr><td><code>LIGHT_TYPE.POINT</code></td><td>Omnidirectional light source at actor position. Subject to attenuation.</td></tr>
+                    <tr><td><code>LIGHT_TYPE.SPOT</code></td><td>Conical light source. Uses <code>innerAngle</code> and <code>outerAngle</code> cones.</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Light Properties</h3>
+            <table>
+                <thead>
+                    <tr><th>Property</th><th>Type</th><th>Description</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>colour</code></td><td>Number</td><td>Light color as 0xRRGGBB.</td></tr>
+                    <tr><td><code>intensity</code></td><td>Number</td><td>Brightness multiplier (typically 0.0 to 1.0).</td></tr>
+                    <tr><td><code>attenC / attenL / attenQ</code></td><td>Number</td><td>Attenuation coefficients (Constant, Linear, Quadratic). Formula: <code>1 / (C + L&middot;d + Q&middot;d&sup2;)</code>.</td></tr>
+                    <tr><td><code>innerAngle / outerAngle</code></td><td>Number</td><td>Spotlight cone half-angles in radians.</td></tr>
+                </tbody>
+            </table>
+
+            <div class="callout">
+                <strong>Pro-tip:</strong> Use <code>Br.BrLightAllocate(opts)</code> to quickly create a Light actor 
+                with these properties in one call.
+            </div>
+        </section>
+
+        <section id="camera-movement">
+            <h2>Camera Movement</h2>
+            <p>Implementing input-driven camera movement involves updating the <code>Actor.transform</code> based on user input. Here are two common patterns.</p>
+
+            <h3>Orbit Camera</h3>
+            <p>An orbit camera rotates around a target point. This is typically implemented using spherical coordinates (Yaw, Pitch, Distance).</p>
+            <pre><code><span class="keyword">let</span> yaw = <span class="num">0.3</span>, pitch = <span class="num">0.35</span>, dist = <span class="num">14</span>;
+<span class="keyword">const</span> target = [<span class="num">0</span>, <span class="num">0</span>, -<span class="num">10</span>];
+
+<span class="comment">// Update your camera transform every frame</span>
+<span class="keyword">function</span> <span class="function">setOrbitCamera</span>(camActor) {
+    <span class="keyword">const</span> cy = Math.<span class="function">cos</span>(yaw), sy = Math.<span class="function">sin</span>(yaw);
+    <span class="keyword">const</span> cp = Math.<span class="function">cos</span>(pitch), sp = Math.<span class="function">sin</span>(pitch);
+    
+    <span class="comment">// Calculate eye position</span>
+    <span class="keyword">const</span> eye = [
+        target[<span class="num">0</span>] + dist * cp * sy,
+        target[<span class="num">1</span>] + dist * sp,
+        target[<span class="num">2</span>] + dist * cp * cy
+    ];
+
+    <span class="comment">// Build camera basis manually (LookAt target)</span>
+    <span class="keyword">const</span> fx = target[<span class="num">0</span>] - eye[<span class="num">0</span>], fy = target[<span class="num">1</span>] - eye[<span class="num">1</span>], fz = target[<span class="num">2</span>] - eye[<span class="num">2</span>];
+    <span class="keyword">const</span> fl = Math.<span class="function">hypot</span>(fx, fy, fz) || <span class="num">1</span>;
+    <span class="keyword">const</span> fnx = fx / fl, fny = fy / fl, fnz = fz / fl;
+
+    <span class="comment">// Right = Forward x Up (0,1,0)</span>
+    <span class="keyword">let</span> rx = -fnz, ry = <span class="num">0</span>, rz = fnx;
+    <span class="keyword">const</span> rl = Math.<span class="function">hypot</span>(rx, ry, rz) || <span class="num">1</span>;
+    rx /= rl; rz /= rl;
+
+    <span class="comment">// Up = Right x Forward</span>
+    <span class="keyword">const</span> ux = ry * fnz - rz * fny;
+    <span class="keyword">const</span> uy = rz * fnx - rx * fnz;
+    <span class="keyword">const</span> uz = rx * fny - ry * fnx;
+
+    <span class="comment">// Apply to Actor transform (Mat34 basis)</span>
+    <span class="keyword">const</span> m = camActor.<span class="prop">transform</span>;
+    m[<span class="num">0</span>] = rx; m[<span class="num">1</span>] = ry; m[<span class="num">2</span>] = rz;   <span class="comment">// X basis</span>
+    m[<span class="num">3</span>] = ux; m[<span class="num">4</span>] = uy; m[<span class="num">5</span>] = uz;   <span class="comment">// Y basis</span>
+    m[<span class="num">6</span>] = -fnx; m[<span class="num">7</span>] = -fny; m[<span class="num">8</span>] = -fnz; <span class="comment">// Z basis (-Forward)</span>
+    m[<span class="num">9</span>] = eye[<span class="num">0</span>]; m[<span class="num">10</span>] = eye[<span class="num">1</span>]; m[<span class="num">11</span>] = eye[<span class="num">2</span>]; <span class="comment">// Translation</span>
+}</code></pre>
+
+            <h3>FPS (First-Person) Camera</h3>
+            <p>An FPS camera rotates based on mouse movement and moves relative to its current orientation.</p>
+            <pre><code><span class="keyword">import</span> { Mat34, Vec3 } <span class="keyword">from</span> <span class="string">'wbrenderer'</span>;
+
+<span class="keyword">let</span> pos = Vec3.<span class="function">create</span>(<span class="num">0</span>, <span class="num">1.5</span>, <span class="num">5</span>);
+<span class="keyword">let</span> yaw = <span class="num">0</span>, pitch = <span class="num">0</span>;
+
+<span class="keyword">function</span> <span class="function">updateFPSCamera</span>(camActor, mouseDelta, keys) {
+    <span class="comment">// 1. Handle Rotation</span>
+    yaw -= mouseDelta.x * <span class="num">0.005</span>;
+    pitch = Math.<span class="function">max</span>(-Math.<span class="prop">PI</span>/<span class="num">2</span>, Math.<span class="function">min</span>(Math.<span class="prop">PI</span>/<span class="num">2</span>, pitch - mouseDelta.y * <span class="num">0.005</span>));
+
+    <span class="comment">// 2. Create orientation matrix</span>
+    <span class="keyword">const</span> rotY = Mat34.<span class="function">create</span>();
+    <span class="keyword">const</span> rotX = Mat34.<span class="function">create</span>();
+    Mat34.<span class="function">rotationY</span>(rotY, yaw);
+    Mat34.<span class="function">rotationX</span>(rotX, pitch);
+    Mat34.<span class="function">multiply</span>(camActor.<span class="prop">transform</span>, rotY, rotX);
+
+    <span class="comment">// 3. Handle Movement (relative to orientation)</span>
+    <span class="keyword">const</span> m = camActor.<span class="prop">transform</span>;
+    <span class="keyword">const</span> forward = [-m[<span class="num">6</span>], <span class="num">0</span>, -m[<span class="num">8</span>]]; <span class="comment">// Forward vector on XZ plane</span>
+    <span class="keyword">const</span> right = [m[<span class="num">0</span>], <span class="num">0</span>, m[<span class="num">2</span>]];
+    Vec3.<span class="function">normalize</span>(forward, forward);
+    Vec3.<span class="function">normalize</span>(right, right);
+
+    <span class="keyword">const</span> move = Vec3.<span class="function">create</span>();
+    <span class="keyword">if</span> (keys[<span class="string">'w'</span>]) Vec3.<span class="function">add</span>(move, move, forward);
+    <span class="keyword">if</span> (keys[<span class="string">'s'</span>]) Vec3.<span class="function">sub</span>(move, move, forward);
+    <span class="keyword">if</span> (keys[<span class="string">'a'</span>]) Vec3.<span class="function">sub</span>(move, move, right);
+    <span class="keyword">if</span> (keys[<span class="string">'d'</span>]) Vec3.<span class="function">add</span>(move, move, right);
+
+    Vec3.<span class="function">normalize</span>(move, move);
+    Vec3.<span class="function">scale</span>(move, move, <span class="num">0.1</span>); <span class="comment">// Walking speed</span>
+    Vec3.<span class="function">add</span>(pos, pos, move);
+
+    <span class="comment">// 4. Apply Translation</span>
+    m[<span class="num">9</span>] = pos[<span class="num">0</span>]; m[<span class="num">10</span>] = pos[<span class="num">1</span>]; m[<span class="num">11</span>] = pos[<span class="num">2</span>];
+}</code></pre>
+        </section>
+
+        <section id="material">
+            <h2>Materials & Flags</h2>
+            <p>The <code>Material</code> class defines the surface properties of a model, including its color, texture, and shading behavior.</p>
+            
+            <h3>MATF Flags</h3>
+            <p>The <code>MATF</code> bitset controls how the renderer processes the material's geometry. These can be combined using bitwise OR (<code>|</code>).</p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Flag</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>MATF.LIGHT</code></td>
+                        <td>Enables lighting calculations. If unset, the material is rendered at full intensity using its base <code>colour</code>.</td>
+                    </tr>
+                    <tr>
+                        <td><code>MATF.SMOOTH</code> / <code>MATF.GOURAUD</code></td>
+                        <td>Enables Gouraud shading, which interpolates light intensity or vertex colors across the face for a smooth appearance.</td>
+                    </tr>
+                    <tr>
+                        <td><code>MATF.TWO_SIDED</code></td>
+                        <td>Disables back-face culling. Both sides of the face will be rendered, essential for sprites or thin geometry.</td>
+                    </tr>
+                    <tr>
+                        <td><code>MATF.ALWAYS_VISIBLE</code></td>
+                        <td>Ensures the face is always rendered by bypassing certain culling optimizations. Often used for important scene elements or effects.</td>
+                    </tr>
+                    <tr>
+                        <td><code>MATF.DISABLE_COLOUR_KEY</code></td>
+                        <td>By default, palette index 0 is treated as transparent for textured materials. Setting this flag makes index 0 opaque.</td>
+                    </tr>
+                </tbody>
+            </table>
         </section>
 
         <section id="renderer">
@@ -366,6 +943,36 @@ r.<span class="function">renderTree</span>(scene, cameraActor);
 
 <span class="comment">// Blit to a Canvas2D context</span>
 color.<span class="function">blitToImageData</span>(myImageData);</code></pre>
+        </section>
+
+        <section id="resizing">
+            <h2>Handling Window Resizing</h2>
+            <p>When the browser window or container changes size, you must update the framebuffers and the camera's projection to prevent stretching or pixelation.</p>
+
+            <pre><code>window.<span class="function">addEventListener</span>(<span class="string">'resize'</span>, () => {
+    <span class="keyword">const</span> W = window.innerWidth;
+    <span class="keyword">const</span> H = window.innerHeight;
+
+    <span class="comment">// 1. Re-allocate Pixelmaps (Renderer expects these to match in size)</span>
+    <span class="comment">// 'color' and 'depth' should be accessible in your render loop</span>
+    color = <span class="keyword">new</span> <span class="function">Pixelmap</span>(W, H, TYPE.RGBX_8888);
+    depth = <span class="keyword">new</span> <span class="function">Pixelmap</span>(W, H, TYPE.DEPTH_F32);
+
+    <span class="comment">// 2. Update Renderer with new buffers</span>
+    renderer = <span class="keyword">new</span> <span class="function">Renderer</span>(color, depth);
+
+    <span class="comment">// 3. Update Camera aspect ratio to prevent stretching</span>
+    camActor.camera.aspect = W / H;
+    
+    <span class="comment">// 4. Update canvas element dimensions and ImageData cache</span>
+    canvas.width = W;
+    canvas.height = H;
+    imgData = ctx.<span class="function">createImageData</span>(W, H);
+});</code></pre>
+
+            <div class="callout">
+                <strong>Performance Note:</strong> If you are using the <code>Br.BrZbSceneRender</code> facade, the renderer is instantiated per-frame, so you only need to update the global pixelmap variables and the camera aspect ratio.
+            </div>
         </section>
 
         <section id="loaders">
@@ -398,10 +1005,102 @@ color.<span class="function">blitToImageData</span>(myImageData);</code></pre>
                     <tr>
                         <td><code>loadAct(buffer)</code></td>
                         <td>.ACT</td>
-                        <td>Root <code>Actor</code> (Hierarchy)</td>
+                        <td><code>Actor</code> (Root of the hierarchy)</td>
                     </tr>
                 </tbody>
             </table>
+
+            <h3>Example: Loading a Hierarchical Actor</h3>
+            <p>The <code>loadAct</code> function reconstructs complex actor hierarchies from <code>.ACT</code> files. It is commonly used alongside <code>walkTree</code> to initialize materials and transformations for sub-models (e.g., wheels on a car).</p>
+            <pre><code><span class="keyword">import</span> { loadAct, walkTree, Br } <span class="keyword">from</span> <span class="string">'wbrenderer'</span>;
+
+<span class="comment">// Load and parse the ACT hierarchy</span>
+<span class="keyword">const</span> res = <span class="keyword">await</span> <span class="function">fetch</span>(<span class="string">'EAGLE.ACT'</span>);
+<span class="keyword">const</span> carRoot = <span class="function">loadAct</span>(<span class="keyword">await</span> res.<span class="function">arrayBuffer</span>());
+
+<span class="comment">// Traverse the tree to set up materials for specific sub-models</span>
+<span class="function">walkTree</span>(carRoot, (actor) => {
+    <span class="keyword">if</span> (actor.modelName === <span class="string">'WHEEL.DAT'</span>) {
+        <span class="comment">// Resolve materials from the global registry</span>
+        actor.materials = [Br.<span class="function">BrMaterialFind</span>(<span class="string">'BGLWEEL.MAT'</span>)];
+    }
+});
+
+scene.<span class="function">add</span>(carRoot);</code></pre>
+
+            <h3>Example: Manual Texture and Material Setup</h3>
+            <p>For fine-grained control outside of the <code>Br.*</code> facade, you can use the raw loaders and manually
+                link textures to materials.</p>
+            <pre><code><span class="keyword">import</span> { loadMat, loadPix, Br } <span class="keyword">from</span> <span class="string">'wbrenderer'</span>;
+
+<span class="keyword">const</span> matAB = <span class="keyword">await</span> (<span class="keyword">await</span> <span class="function">fetch</span>(<span class="string">'LEVEL.MAT'</span>)).<span class="function">arrayBuffer</span>();
+<span class="keyword">const</span> pixAB = <span class="keyword">await</span> (<span class="keyword">await</span> <span class="function">fetch</span>(<span class="string">'LEVEL.PIX'</span>)).<span class="function">arrayBuffer</span>();
+
+<span class="comment">// 1. Load materials and pixelmaps into memory</span>
+<span class="keyword">const</span> materials = <span class="function">loadMat</span>(matAB);
+<span class="keyword">const</span> textures = <span class="function">loadPix</span>(pixAB);
+
+<span class="comment">// 2. Register textures in the global map registry so they can be found by name</span>
+textures.<span class="function">forEach</span>(pm => Br.<span class="function">BrMapAdd</span>(pm));
+
+<span class="comment">// 3. Link textures and apply a shared palette to each material</span>
+<span class="keyword">for</span> (<span class="keyword">const</span> mat <span class="keyword">of</span> materials) {
+    <span class="keyword">if</span> (mat.colourMapName) {
+        mat.colourMap = Br.<span class="function">BrMapFind</span>(mat.colourMapName);
+        mat.palette = levelPalette; <span class="comment">// 768-byte RGB palette (Uint8Array)</span>
+    }
+    Br.<span class="function">BrMaterialAdd</span>(mat);
+}</code></pre>
+        </section>
+
+        <section id="registry">
+            <h2>Asset Registry</h2>
+            <p>The Registry system provides a global, case-insensitive lookup mechanism for assets. This is critical for resolving named references found in <code>.DAT</code>, <code>.MAT</code>, and <code>.ACT</code> files.</p>
+
+            <h3>Global Singletons</h3>
+            <p>WBrenderer provides three specialized registry instances:</p>
+            <ul>
+                <li><code>modelRegistry</code>: Stores <code>Model</code> objects (geometry).</li>
+                <li><code>materialRegistry</code>: Stores <code>Material</code> objects (surface properties).</li>
+                <li><code>mapRegistry</code>: Stores <code>Pixelmap</code> objects (textures and palettes).</li>
+            </ul>
+
+            <h3>Methods</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Method</th>
+                        <th>Parameters</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>add(name, item)</code></td>
+                        <td><code>name</code>: String, <code>item</code>: Object</td>
+                        <td>Registers an asset. Names are normalized to uppercase internally.</td>
+                    </tr>
+                    <tr>
+                        <td><code>find(name)</code></td>
+                        <td><code>name</code>: String</td>
+                        <td>Retrieves an asset by name. Lookup is case-insensitive. Returns <code>undefined</code> if not found.</td>
+                    </tr>
+                    <tr>
+                        <td><code>remove(name)</code></td>
+                        <td><code>name</code>: String</td>
+                        <td>Removes an asset from the registry.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Example: Custom Registration</h3>
+            <pre><code><span class="keyword">import</span> { modelRegistry, Model } <span class="keyword">from</span> <span class="string">'wbrenderer'</span>;
+
+<span class="comment">// Manually register a custom model</span>
+modelRegistry.<span class="function">add</span>(<span class="string">'PROC_CUBE'</span>, myCustomCube);
+
+<span class="comment">// Retrieve it later (case does not matter)</span>
+<span class="keyword">const</span> model = modelRegistry.<span class="function">find</span>(<span class="string">'proc_cube'</span>);</code></pre>
         </section>
 
         <section id="brender">
@@ -494,6 +1193,39 @@ color.<span class="function">blitToImageData</span>(myImageData);</code></pre>
                     </tr>
                 </tbody>
             </table>
+
+            <div class="callout">
+                <strong>Facade Loaders vs. Raw Loaders</strong>
+                <p>The <code>Br.BrFmt*Load</code> functions (like <code>BrFmtModelLoad</code>) are wrappers around the raw loaders (like <code>loadDat</code>). The key differences are:</p>
+                <ul>
+                    <li><strong>Side Effects:</strong> <code>loadDat</code> simply parses the buffer. <code>BrFmtModelLoad</code> parses the buffer AND calls <code>BrModelAdd</code> for every resulting model.</li>
+                    <li><strong>Name Resolution:</strong> By using the facade loaders, models and materials are indexed in the global <code>Registry</code>. This allows the <code>loadAct</code> function to automatically "stitch" models onto actors when it encounters a name like <code>"EAGLE.DAT"</code>.</li>
+                    <li><strong>Palette Handling:</strong> <code>BrFmtPixelmapLoad</code> registers palettes found in <code>.PIX</code> files into the map registry. While <code>loadPix</code> returns them as raw objects, registration allows them to be found via <code>BrMapFind</code>. Note: Palettes often require manual repacking from 4-byte (XRGB) to 3-byte (RGB) formats for use in materials.</li>
+                </ul>
+                <pre><code><span class="comment">// The Raw Way: Manual management</span>
+<span class="keyword">const</span> [model] = <span class="function">loadDat</span>(buffer);
+<span class="keyword">const</span> actor = <span class="keyword">new</span> <span class="function">Actor</span>({ type: ACTOR_TYPE.MODEL, model });
+
+<span class="comment">// The BRender Way: Automatic registration</span>
+Br.<span class="function">BrFmtModelLoad</span>(buffer); 
+<span class="comment">// Later, loading an .ACT file will find "EAGLE.DAT" automatically</span>
+<span class="keyword">const</span> carRoot = <span class="function">loadAct</span>(actBuffer); 
+</code></pre>
+
+                <p><strong>Example: Palette Repacking</strong></p>
+                <p>Many legacy palettes (like <code>DRRENDER.PAL</code>) are stored as <code>RGBX</code> pixelmaps. You must
+                    repack these for use in <code>Material.palette</code>:</p>
+                <pre><code><span class="keyword">const</span> palPm = Br.<span class="function">BrMapFind</span>(<span class="string">'DRRENDER.PAL'</span>);
+<span class="keyword">const</span> palData = <span class="keyword">new</span> <span class="function">Uint8Array</span>(256 * 3);
+<span class="keyword">for</span> (<span class="keyword">let</span> i = 0; i < 256; i++) {
+    <span class="keyword">const</span> o = i * 4;
+    palData[i * 3 + 0] = palPm.pixels[o + 1]; <span class="comment">// R</span>
+    palData[i * 3 + 1] = palPm.pixels[o + 2]; <span class="comment">// G</span>
+    palData[i * 3 + 2] = palPm.pixels[o + 3]; <span class="comment">// B</span>
+}
+<span class="comment">// Link to material manually</span>
+mat.palette = palData;</code></pre>
+            </div>
 
             <h3>Scene Graph</h3>
             <table>
@@ -633,6 +1365,60 @@ color.<span class="function">blitToImageData</span>(myImageData);</code></pre>
 </code></pre>
         </section>
 
+        <section id="physics">
+            <h2>Physics Actors</h2>
+            <p>While WBrenderer is primarily a visual engine, its dynamic <code>Actor</code> properties make it easy to
+                integrate with a physics simulation. You can attach state like velocity and mass directly to actors and
+                process them in your update loop.</p>
+
+            <h3>Physical State</h3>
+            <p>Initialize physical properties on your actors. Use <code>Vec3</code> for vector state to maintain
+                performance.</p>
+            <pre><code><span class="keyword">import</span> { Vec3 } <span class="keyword">from</span> <span class="string">'wbrenderer'</span>;
+
+<span class="keyword">const</span> car = <span class="keyword">new</span> <span class="function">Actor</span>({ type: ACTOR_TYPE.MODEL, model: carModel });
+car.velocity = Vec3.<span class="function">create</span>(<span class="num">0</span>, <span class="num">0</span>, <span class="num">0</span>);
+car.mass = <span class="num">1500</span>;
+car.isStatic = <span class="keyword">false</span>;</code></pre>
+
+            <h3>Integration Loop</h3>
+            <p>Perform physics calculations before rendering. Use <code>walkTree</code> to update all dynamic objects in
+                the scene.</p>
+            <pre><code><span class="keyword">function</span> <span class="function">physicsStep</span>(scene, dt) {
+    <span class="function">walkTree</span>(scene, (actor) => {
+        <span class="keyword">if</span> (actor.isStatic || !actor.velocity) <span class="keyword">return</span>;
+
+        <span class="comment">// 1. Apply Forces (e.g. Gravity)</span>
+        actor.velocity[<span class="num">1</span>] -= <span class="num">9.8</span> * dt;
+
+        <span class="comment">// 2. Integrate Position</span>
+        <span class="keyword">const</span> m = actor.transform;
+        m[<span class="num">9</span>]  += actor.velocity[<span class="num">0</span>] * dt;
+        m[<span class="num">10</span>] += actor.velocity[<span class="num">1</span>] * dt;
+        m[<span class="num">11</span>] += actor.velocity[<span class="num">2</span>] * dt;
+
+        <span class="comment">// 3. Simple Collision (Floor)</span>
+        <span class="keyword">if</span> (m[<span class="num">10</span>] < <span class="num">0</span>) {
+            m[<span class="num">10</span>] = <span class="num">0</span>;
+            actor.velocity[<span class="num">1</span>] *= -<span class="num">0.5</span>; <span class="comment">// Bounce with energy loss</span>
+        }
+    });
+}</code></pre>
+
+            <h3>Collision Proxies</h3>
+            <p>You can use invisible actors as collision shapes. This is common when loading <code>.ACT</code> files
+                that contain simplified geometry meant specifically for the physics engine.</p>
+            <pre><code><span class="function">walkTree</span>(carRoot, (actor) => {
+    <span class="comment">// Identify collision actors by name</span>
+    <span class="keyword">if</span> (actor.name.<span class="function">includes</span>(<span class="string">'BOUNDS'</span>)) {
+        actor.isCollisionProxy = <span class="keyword">true</span>;
+        
+        <span class="comment">// Set type to NONE so it doesn't render, but stays in the tree</span>
+        actor.type = ACTOR_TYPE.NONE;
+    }
+});</code></pre>
+        </section>
+
         <footer style="margin-top: 6rem; padding: 2rem 0; border-top: 1px solid var(--line); color: var(--line);">
             &copy; 2024 WBrenderer Engine | Documentation v0.1
         </footer>
@@ -656,6 +1442,102 @@ color.<span class="function">blitToImageData</span>(myImageData);</code></pre>
                 link.classList.remove('active');
                 if (link.getAttribute('href').includes(current)) {
                     link.classList.add('active');
+                }
+            });
+        });
+
+        // Copy Code Button functionality
+        document.querySelectorAll('pre').forEach(pre => {
+            const button = document.createElement('button');
+            button.className = 'copy-button';
+            button.textContent = 'Copy';
+            
+            button.addEventListener('click', async () => {
+                const code = pre.querySelector('code');
+                const text = code ? code.innerText : pre.innerText;
+                
+                try {
+                    await navigator.clipboard.writeText(text);
+                    button.textContent = 'Copied!';
+                    button.classList.add('copied');
+                    
+                    setTimeout(() => {
+                        button.textContent = 'Copy';
+                        button.classList.remove('copied');
+                    }, 2000);
+                } catch (err) {
+                    console.error('Failed to copy: ', err);
+                }
+            });
+            
+            pre.appendChild(button);
+        });
+
+        // Search functionality
+        const searchInput = document.getElementById('api-search');
+        searchInput.addEventListener('input', () => {
+            const query = searchInput.value.toLowerCase();
+            document.querySelectorAll('.nav-group').forEach(group => {
+                const list = group.nextElementSibling;
+                if (list && list.tagName === 'UL') {
+                    let hasVisible = false;
+                    list.querySelectorAll('li').forEach(li => {
+                        const link = li.querySelector('a');
+                        if (!link.hasAttribute('data-text')) {
+                            link.setAttribute('data-text', link.textContent);
+                        }
+                        const text = link.getAttribute('data-text');
+
+                        if (!query) {
+                            link.textContent = text;
+                            li.style.display = '';
+                            hasVisible = true;
+                        } else {
+                            const index = text.toLowerCase().indexOf(query);
+                            if (index !== -1) {
+                                const before = text.slice(0, index);
+                                const middle = text.slice(index, index + query.length);
+                                const after = text.slice(index + query.length);
+                                link.innerHTML = `${before}<mark class="search-highlight">${middle}</mark>${after}`;
+                                li.style.display = '';
+                                hasVisible = true;
+                            } else {
+                                li.style.display = 'none';
+                            }
+                        }
+                    });
+                    group.style.display = hasVisible ? '' : 'none';
+                    list.style.display = hasVisible ? '' : 'none';
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>                     link.setAttribute('data-text', link.textContent);
+                        }
+                        const text = link.getAttribute('data-text');
+
+                        if (!query) {
+                            link.textContent = text;
+                            li.style.display = '';
+                            hasVisible = true;
+                        } else {
+                            const index = text.toLowerCase().indexOf(query);
+                            if (index !== -1) {
+                                const before = text.slice(0, index);
+                                const middle = text.slice(index, index + query.length);
+                                const after = text.slice(index + query.length);
+                                link.innerHTML = `${before}<mark class="search-highlight">${middle}</mark>${after}`;
+                                li.style.display = '';
+                                hasVisible = true;
+                            } else {
+                                li.style.display = 'none';
+                            }
+                        }
+                    });
+                    group.style.display = hasVisible ? '' : 'none';
+                    list.style.display = hasVisible ? '' : 'none';
                 }
             });
         });
